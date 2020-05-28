@@ -1,0 +1,44 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>All Posts - Software Tech Blog</title>
+        <link>https://faheem-nadeem.github.io/posts/</link>
+        <description>All Posts | Software Tech Blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>en</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sun, 15 Dec 2019 00:00:00 &#43;0000</lastBuildDate><atom:link href="https://faheem-nadeem.github.io/posts/" rel="self" type="application/rss+xml" /><item>
+    <title>Ultimate Guide to Markdown</title>
+    <link>https://faheem-nadeem.github.io/syntax/</link>
+    <pubDate>Fri, 29 Nov 2019 16:30:40 &#43;0900</pubDate>
+    <author>Author</author>
+    <guid>https://faheem-nadeem.github.io/syntax/</guid>
+    <description><![CDATA[<div class="featured-image">
+                <img src="/images/posts/markdown/markdown-4.jpg" referrerpolicy="no-referrer">
+            </div><p>This article offers a quick cheatsheet of basic Markdown syntax that can be used in Hugo content files.</p>]]></description>
+</item><item>
+    <title>Hydra—Kubernetes based Dataset PubSub and Volume Management System</title>
+    <link>https://faheem-nadeem.github.io/hydra/</link>
+    <pubDate>Sun, 15 Dec 2019 00:00:00 &#43;0000</pubDate>
+    <author>Author</author>
+    <guid>https://faheem-nadeem.github.io/hydra/</guid>
+    <description><![CDATA[<div class="featured-image">
+                <img src="/images/posts/hydra/thumbnail.png" referrerpolicy="no-referrer">
+            </div>In the previous articles of this advent series, we described the architecture of our search engine and highlighted technologies which help us serve search results.
+After many iterations on our architecture, we are finally on a microservice architecture pattern, driven through a container orchestration platform: Kubernetes. This brought us many engineering improvements, but it also has introduced new challenges, such as, the ability to perform a dataset propogation via Pub-Sub, along with volume management for microservices.]]></description>
+</item><item>
+    <title>The Architecture of a Large-Scale Web Search Engine</title>
+    <link>https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/</link>
+    <pubDate>Sat, 14 Dec 2019 00:00:00 &#43;0000</pubDate>
+    <author>Author</author>
+    <guid>https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/</guid>
+    <description><![CDATA[<div class="featured-image">
+                <img src="/images/posts/architecture-of-large-scale-web-search-engine/serp.gif" referrerpolicy="no-referrer">
+            </div>In previous posts of this series, we have described some of the technologies that power our private search products. It is about time that we introduce the systems that bring everything together. It is important to understand that a web scale search engine is highly complex. It is a distributed system with strong constraints on performance and latency. On top of that it can easily become extremely costly to operate; both in human resource and, of course, in money.]]></description>
+</item><item>
+    <title>Why Kubeflow In Your Infrastructure</title>
+    <link>https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/</link>
+    <pubDate>Fri, 09 Nov 2018 01:57:04 &#43;0200</pubDate>
+    <author>Author</author>
+    <guid>https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/</guid>
+    <description><![CDATA[<div class="featured-image">
+                <img src="/images/posts/kubeflow/architecture.png" referrerpolicy="no-referrer">
+            </div>CEOs and CTOs are being challenged by customers, analysts and investors to define how Artificial Intelligence and Machine Learning will impact their revenues and costs. The leading research and development organizations are quickly migrating to open source machine learning frameworks, especially those that take advantage of the operational and infrastructure efficiencies provided by containers, micro-services and Kubernetes. This trend is demonstrated in a recent 451 Research survey which found that over 70% of enterprise organizations surveyed are using Kubernetes.]]></description>
+</item></channel>
+</rss>

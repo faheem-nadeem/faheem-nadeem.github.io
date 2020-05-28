@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Hydra—Kubernetes based Dataset PubSub and Volume Management System - Software Tech Blog</title><meta name="Description" content="A tech blog about all things software, cloud, cloud native stack, search and distributed systems"><meta property="og:title" content="Hydra—Kubernetes based Dataset PubSub and Volume Management System" />
+<meta property="og:description" content="In the previous articles of this advent series, we described the architecture of our search engine and highlighted technologies which help us serve search results.
+After many iterations on our architecture, we are finally on a microservice architecture pattern, driven through a container orchestration platform: Kubernetes. This brought us many engineering improvements, but it also has introduced new challenges, such as, the ability to perform a dataset propogation via Pub-Sub, along with volume management for microservices." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://faheem-nadeem.github.io/hydra/" />
+<meta property="og:image" content="https://faheem-nadeem.github.io/images/posts/hydra/thumbnail.png" />
+<meta property="article:published_time" content="2019-12-15T00:00:00+00:00" />
+<meta property="article:modified_time" content="2020-05-27T15:10:10+02:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://faheem-nadeem.github.io/images/posts/hydra/thumbnail.png"/>
+
+<meta name="twitter:title" content="Hydra—Kubernetes based Dataset PubSub and Volume Management System"/>
+<meta name="twitter:description" content="In the previous articles of this advent series, we described the architecture of our search engine and highlighted technologies which help us serve search results.
+After many iterations on our architecture, we are finally on a microservice architecture pattern, driven through a container orchestration platform: Kubernetes. This brought us many engineering improvements, but it also has introduced new challenges, such as, the ability to perform a dataset propogation via Pub-Sub, along with volume management for microservices."/>
+<meta name="application-name" content="Software Tech Blog">
+<meta name="apple-mobile-web-app-title" content="Software Tech Blog"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="../favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png"><link rel="mask-icon" href="../safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="../site.webmanifest"><link rel="canonical" href="https://faheem-nadeem.github.io/hydra/" /><link rel="prev" href="https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/" /><link rel="next" href="https://faheem-nadeem.github.io/syntax/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="../css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Hydra—Kubernetes based Dataset PubSub and Volume Management System",
+        "inLanguage": "en",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/faheem-nadeem.github.io\/hydra\/"
+        },"image": {
+                "@type": "ImageObject",
+                "url": "https:\/\/faheem-nadeem.github.io\/cover.png",
+                "width":  800 ,
+                "height":  600 
+            },"genre": "posts","keywords": "machine learning, model management, data versioning, pub sub, kubernetes","wordcount":  2246 ,
+        "url": "https:\/\/faheem-nadeem.github.io\/hydra\/","datePublished": "2019-12-15T00:00:00+00:00","dateModified": "2020-05-27T15:10:10+02:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+                "@type": "Organization",
+                "name": "xxxx",
+                "logo": {
+                "@type": "ImageObject",
+                "url": "https:\/\/faheem-nadeem.github.io\/logo.png",
+                "width":  127 ,
+                "height":  40 
+                }
+            },"author": {
+                "@type": "Person",
+                "name": "faheem"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="../" title="Software Tech Blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>Software Tech Blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="../posts/"> Posts </a><a class="menu-item" href="../tags/"> Tags </a><a class="menu-item" href="../categories/"> Categories </a><a class="menu-item" href="https://github.com/faheem-nadeem" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="../" title="Software Tech Blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>Software Tech Blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><a class="menu-item" href="../posts/" title="">Posts</a><a class="menu-item" href="../tags/" title="">Tags</a><a class="menu-item" href="../categories/" title="">Categories</a><a class="menu-item" href="https://github.com/faheem-nadeem" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Hydra—Kubernetes based Dataset PubSub and Volume Management System</h1><h2 class="single-subtitle">A generic solution to data management for services in Kubernetes</h2><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="../" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>faheem</a></span>&nbsp;<span class="post-category">included in <a href="../categories/search/"><i class="far fa-folder fa-fw"></i>search</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-12-15">2019-12-15</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;2246 words&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;11 minutes&nbsp;</div>
+        </div><div class="featured-image"><img
+        class="lazyload"
+        src="../svg/loading/normal.min.svg"
+        data-src="../images/posts/hydra/thumbnail.png"
+        data-srcset="../images/posts/hydra/thumbnail.png, ../images/posts/hydra/thumbnail.png 1.5x, ../images/posts/hydra/thumbnail.png 2x"
+        data-sizes="auto"
+        alt="/images/posts/hydra/thumbnail.png"
+        title="/images/posts/hydra/thumbnail.png" /></div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#scenario---working-with-services-and-datasets">Scenario&mdash;Working with Services and Datasets</a></li>
+    <li><a href="#managing-lifecycle-of-datasets-models-and-indexes-on-instances">Managing lifecycle of datasets (models and indexes) on Instances</a></li>
+    <li><a href="#introducing-hydra">Introducing Hydra</a></li>
+    <li><a href="#working-with-hydra---end-to-end-use-case">Working with Hydra&mdash;End-to-End Use Case</a>
+      <ul>
+        <li><a href="#publishing-state-of-a-release">Publishing State of a Release</a></li>
+        <li><a href="#hydras-global-manager--data-download--s3---instance">Hydra&rsquo;s Global Manager &amp; Data Download  (S3 -&gt; Instance)</a></li>
+        <li><a href="#application-dataset-reload">Application Dataset Reload</a></li>
+      </ul>
+    </li>
+    <li><a href="#future-work">Future Work</a></li>
+    <li><a href="#conclusion">Conclusion</a></li>
+    <li><a href="#footnotes-and-remarks">Footnotes and Remarks</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>In the previous articles of this <a href="https://0x65.dev" target="_blank" rel="noopener noreffer">advent series</a>,  we
+described the <a href="https://0x65.dev/blog/2019-12-14/the-architecture-of-a-large-scale-web-search-engine-circa-2019.html" target="_blank" rel="noopener noreffer">architecture of our search engine</a>
+and highlighted technologies which help us <a href="https://cliqz.com/#channel=blog" target="_blank" rel="noopener noreffer">serve search results</a>.</p>
+<p>After many iterations on our architecture, we are finally on a microservice architecture pattern,
+driven through a container orchestration platform: Kubernetes. This brought us
+many engineering improvements, but it also has introduced new challenges,
+such as, the ability to perform a dataset propogation via Pub-Sub, along with volume management for microservices. Let us illustrate this point further by example.</p>
+<h2 id="scenario---working-with-services-and-datasets">Scenario&mdash;Working with Services and Datasets</h2>
+<ul>
+<li>Let us say, a team of engineers are developing a service, which has a dependency
+on dataset X, Y and Z.</li>
+<li>The service requires that periodically, these datasets are updated (<em>Data Updates</em>).</li>
+<li>Typically, a dataset will be versioned. Hence, there is the need for a versioning scheme, given the frequency of updates, time-stamps are a good option. e.g.: 2019-12-15T00-00-00 i.e. YYYY-MM-DDThh-mm-ss (<em>Data Versioning</em>).</li>
+<li>For the service to present a holistic view of the system the datasets in a given version can have interdependencies (<em>Service-Data State Management</em>).</li>
+<li>Newer datasets can be published periodically through an automated pipeline and artifacts stored in an object store like S3.</li>
+<li>One then needs to <strong>keep track</strong> of when these datasets finish building and thereby <strong>notify</strong> the downstream service of their availability
+(keeping in mind that all interdependencies must be satisfied).</li>
+<li>Once all three datasets are available, we <strong>push the data to instances</strong> where
+services are running (<em>Data provisioning on Volumes</em>).</li>
+<li>The data is <strong>downloaded behind the scenes</strong>, without affecting the downstream service.</li>
+<li>Eventually, the service gets <strong>notified</strong> of successful download for all the
+datasets on the instance.</li>
+<li>Service intrinsically <strong>identifies</strong> and <strong>verifies</strong> this change and
+<strong>shifts</strong> to new datasets incrementally avoiding downtime..</li>
+</ul>
+<p>This is a very common pattern for services, which rely on frequently updating
+immutable datasets. If this is a one-off scenario, for instance a prototype or
+a service whose data updates once every 3 months, then you are probably better
+off doing all steps necessary by hand or by writing a custom automation scripts.
+But, if this is a regular scenario like in the real world&mdash;for example when
+dealing with multiple services, with a multitude of datasets, each having
+their own periodicity&mdash;it may lead to potentially severe issues pretty quickly.</p>
+<p>Moreover, there can be two major failure scenarios:</p>
+<ol>
+<li>Pods can be evicted (Kubernetes Specific).</li>
+<li>Instances may be lost (General Scenario).</li>
+</ol>
+<p>Hence, <em>centrally automating dataset propagation, in a high failure system has its challenges but brings in considerable value.</em></p>
+<p>In this post, we will briefly introduce a solution built in-house, named
+<em>Hydra</em>, which provides a generic solution to the use-case mentioned above. We
+describe the need for such a system in our organization.</p>
+<p>On a high level, Hydra is composed of a set of components which,</p>
+<ol>
+<li>Provide a dataset pub-sub mechanism.</li>
+<li>Maintain a global state.</li>
+<li>Manage datasets on volumes for services running within a Kubernetes cluster.</li>
+</ol>
+<p>At its core, Hydra is able to tap into the Kubernetes service registry for discovery and observability of running services.</p>
+<h2 id="managing-lifecycle-of-datasets-models-and-indexes-on-instances">Managing lifecycle of datasets (models and indexes) on Instances</h2>
+<p>One of the core requirements of our search engine is fast access to different types
+of datasets which can have both static or dynamic composition. The dynamism of
+datasets can be described w.r.t their update frequency (some update real-time,
+some based on a triggered event and some based on a pre-configured cron job setting).</p>
+<p>The dataset representation can be a machine learned model (Tensorflow, Keras,
+Scikit-Learn, etc.), a <a href="https://github.com/granne/granne" target="_blank" rel="noopener noreffer">Granne</a> Index
+(Approximate Nearest Neighbor Index), <a href="https://github.com/dncc/qpick" target="_blank" rel="noopener noreffer">qpick</a>
+Index, a key-value compiled dataset (<a href="https://github.com/KeyviDev/keyvi" target="_blank" rel="noopener noreffer">Keyvi</a>,
+RocksDB, etc.), a service configuration, or an artifact from a batch job. The size
+may range from a couple of megabytes to several terabytes.</p>
+<p>For the purpose of serving search results, the <strong>medium and placement</strong> of these indexes and
+models is also important. Datasets may be located on spinning magnetic disks,
+SSDs or on RAM (ram-disks). This placement differs from service to service,
+with varying degree of Service Level Objectives (SLO) requirements (access
+patterns, latency guarantees, replication, etc.) In the context of cloud
+provisioning, the storage medium can also differ. For some models which do not
+have strict latency requirements, we choose
+<a href="https://aws.amazon.com/ebs/" target="_blank" rel="noopener noreffer">Elastic Block Storage</a> (EBS) but for others where
+read latency needs to be minimized and IOPS can be a determining factor to
+achieve SLOs, we employ local volumes based on raided SSDs using the <a href="https://en.wikipedia.org/wiki/Non-volatile_memory" target="_blank" rel="noopener noreffer">NVME</a> protocol.
+For services requiring even more guarantees we rely on large ram-disks.</p>
+<p>Every microservice in the critical request path, as explained in our previous
+article<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>, can have a persistent layer composed of the aforementioned
+datasets. In order to provide fresh results and to support graceful degradation
+on failures we need to have a solid mechanism for dataset propagation.</p>
+<p>Other use cases may include: data exploration while developing new features,
+running A/B tests or modifying configuration of running services on the fly.</p>
+<p>Finally, there is another important reason for solid dataset propagation.
+If it does not exist, every team working on a feature-related data will
+have to reinvent the wheel. We have experienced first hand that multiple teams
+come up with different solutions for downloading and keeping state of their
+services, this tooling, however, was tightly coupled with the system,
+making re-usability impossible. A common system is needed to save people the tedious task of &ldquo;getting ready&rdquo;.</p>
+<h2 id="introducing-hydra">Introducing Hydra</h2>
+<p>These requirements presented an opportunity to centralize said effort and bake
+it with infrastructure support. A centralized effort also brings in an
+opportunity to build better observability and fault detection tools. Knowing the
+actual placement of the data as well as the ability to quickly
+change it, is vital for a working system, where the data is served from
+and facilitates quick changes. The service which
+solves these challenges for us is called <em>Hydra</em>.</p>
+<p>The core constituents of Hydra are as follows:</p>
+<ul>
+<li>It provides a generic pub-sub approach to handling datasets at scale and
+aids a service to publish or subscribe to versioned datasets.</li>
+<li>Introduces a concept of channels, publishers and consumers.</li>
+<li>A <strong>channel</strong> contains an ordered list of releases where the head pointer
+points to the latest release subscribers (services) would be interested in.
+<em>Channel states</em> are managed by a <strong>Global Manager</strong> and metadata for the same is
+maintained in a highly available <strong><a href="https://www.consul.io/" target="_blank" rel="noopener noreffer">Consul</a></strong>.</li>
+<li><strong>Publishers</strong> can update a channel with a new release (HTTP API) and
+consumers will be notified of new changes.</li>
+<li>Data update diffs are propagated from <em>Global Manager</em> to downstream
+agents named <em>Docto</em> running as <a href="https://kubernetes.io/docs/concepts/workloads/controllers/daemonset/" target="_blank" rel="noopener noreffer">deamon-sets</a> which can ensure a global state
+(downloading of data from S3 and cleanup) in a reconciliation loop.</li>
+<li>On successful availability of a release on an instance, consumers are
+incrementally notified of newer datasets, which are then rolled out. This is done via an additional component named <em>AppMan</em> which is responsible for this task. This allows
+services to be agnostic of Hydra&rsquo;s workings.</li>
+<li>Newer datasets can be rolled out using the <a href="https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/" target="_blank" rel="noopener noreffer">readiness probe</a> feature from Kubernetes. Whereby given a service is in high availability, rolling data deployments can be done by draining traffic from a pod using readiness probes.</li>
+<li>In scenarios of <strong>replication</strong>, this is done <em>one by one</em> for a given service,
+thereby reducing downtime.</li>
+<li>The datasets are <strong>immutable</strong> in nature i.e. a single release represents a
+complete view of data and incurs no dependency on previous versioned data
+releases in the same channel.</li>
+</ul>
+<h2 id="working-with-hydra---end-to-end-use-case">Working with Hydra&mdash;End-to-End Use Case</h2>
+<h3 id="publishing-state-of-a-release">Publishing State of a Release</h3>
+<p>A user or a service can post the dataset source paths (composed within a release)
+using client-side libraries / CLI and its storage placement as required with the help of a data template, provided as part of Hydra&rsquo;s client CLI tool. This complete information
+is posted via the HTTP API to a Global Manager Server.</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="n">DISK</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">RAM</span> <span class="o">=</span> <span class="mi">1</span>
+
+<span class="n">DATA_TEMPLATE</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&#34;dataset_1&#34;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&#34;SourcePath&#34;</span><span class="p">:</span> <span class="n">f</span><span class="s2">&#34;s3://some-bucket/some-data-set-1/{VERSION_PLACEHOLDER}/file1.xyz&#34;</span><span class="p">,</span>
+        <span class="s2">&#34;Placement&#34;</span><span class="p">:</span> <span class="n">DISK</span>
+    <span class="p">},</span>
+    <span class="s2">&#34;dataset_2&#34;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&#34;SourcePath&#34;</span><span class="p">:</span> <span class="n">f</span><span class="s2">&#34;s3://some-bucket/some-data-set-2/{VERSION_PLACEHOLDER}/file2.xyz&#34;</span><span class="p">,</span>
+        <span class="s2">&#34;Placement&#34;</span><span class="p">:</span> <span class="n">RAM</span>
+    <span class="p">},</span>
+<span class="p">}</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Where, <code>SourcePath</code> is the original S3 bucket path where the data is / will be available, and <code>Placement</code> describes where the data must be eventually provisioned on the instance.</p>
+<p>Some extra information like Environment, Release and Namespace are also
+required by the Hydra CLI client. It allows Hydra to formulate channel identity
+and scoping and is stored as metadata for respective channel. This can be propagated using special flags:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span><span class="lnt">3
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-bash" data-lang="bash">--env: Environment describes which cluster to target
+--release: Release name of service relevant to dataset template
+-n: Namespace of deployed service
+</code></pre></td></tr></table>
+</div>
+</div><p>The hydra client submits this data template with the <code>VERSION_PLACEHOLDER</code>
+computed based on two factors:</p>
+<ol>
+<li>Identifying most recent datasets available on S3.</li>
+<li>If datasets should have the same timestamps, then it verifies the same before
+proceeding ahead.</li>
+</ol>
+<p>We assume that once datasets are available on S3 they have been already verified
+for integrity and are fit to serve. These checks are done as part of the
+data-pipeline&rsquo;s post processing step.</p>
+<p>Channels can have retention policies on the number of releases to keep.
+Also, you can configure the number of actual releases to keep on instances.
+The default value is 2. This means that apart from the newly published release,
+the previous dataset is also preserved on instances. All older releases can
+be cleaned up based on retention policies to improve disk utilization.</p>
+<h3 id="hydras-global-manager--data-download--s3---instance">Hydra&rsquo;s Global Manager &amp; Data Download  (S3 -&gt; Instance)</h3>
+<p>Once a new data release is published to a channel, the global manager is
+able to correlate consumers based on discovery from the Kubernetes
+service registry or explicit registration.</p>
+<p>All the instances in the cluster run an agent as a daemon-set which only
+communicates with the Global manager and is wholly responsible to download
+the models from S3 to instance. Thus the global manager communicates with this
+daemon application and sends information about which datasets to download.
+The daemon verifies the requests, identifies the placement, checks if there
+is enough storage available on the instance and starts the download. It
+constantly communicates the progress of the download with Global Manager
+and notifies a <code>SUCCESS</code> upon its completion.</p>
+<h3 id="application-dataset-reload">Application Dataset Reload</h3>
+<p>Next, the Global Manager notifies the consumer through client-side
+library interfaces on availability of newer release datasets. This is done
+incrementally to avoid downtimes. This initiates the process, where at
+first readiness probes are used to drain traffic, then either by
+using a built-in mechanism or a service restart, new data is reloaded
+for the service, and readiness probes are turned back ON, to serve live traffic.</p>
+<p>If there are several replica pods behind a service, the Global manager
+performs the reload one by one, making sure each pod comes back up before
+starting the data reloads in other pods of the same service.</p>
+<p><strong>Notes:</strong></p>
+<ol>
+<li>
+<p>In development settings, for non critical data services we employ a
+downscaler strategy which downscales deployments to zero during non working hours.
+This constitutes an uptime during the following times: <code>Mon-Fri 08:00-19:30 Europe/Berlin</code>.</p>
+<p>This means that not only the container, but instance with data is downscaled.
+But, since hydra is autonomous, we can quickly prepare the instance with the
+data when the deployment is scaled up again on a newer instance. This works
+great for us, as we save some costs by not spinning high capacity instances
+(a necessary requirement for hosting search indexes) in development setting
+during non-working hours.</p>
+</li>
+<li>
+<p>In a special case where RAM is the preferred placement medium, given the fact
+that they are usually a scarce and expensive resource, we make sure that they
+are also copied over to disk if available for faster load times to RAMDISK.
+We only keep a single version on RAM for that dataset. Due to locking on older
+datasets or limited availability of space on-ramdisk services can be drained
+and shifted to newer releases.</p>
+</li>
+</ol>
+<h2 id="future-work">Future Work</h2>
+<p>Hydra shares a lot of its DNA with project <a href="https://medium.com/netflix-techblog/how-netflix-microservices-tackle-dataset-pub-sub-4a068adcc9a" target="_blank" rel="noopener noreffer">Gutenberg</a>, which was announced
+two months ago.</p>
+<p>We will keep an eye on Gutenberg&rsquo;s development since both systems attempt
+to solve the very same problems. It is just natural that different teams
+reach similar conclusions when presented with the same problem.
+Nonetheless, it is always nice to get external validation of the decision taken.</p>
+<p>We have been developing Hydra for the last 2 years and gradually integrating it into
+our production systems. However, it is far from a finished project. A peak on the project&rsquo;s future timeline:</p>
+<ul>
+<li>Better control over Volume discovery, provisioning, budgeting and isolation.</li>
+<li>Multi language support for client side libraries. Including Rust and Go. Currently we only provide Python.</li>
+<li>More scoping options such as region and pinning releases to a specific version.</li>
+<li>Encryption and access control to improve security footprint and avoid disaster scenarios.</li>
+<li>Better incremental rollouts by introducing new strategies like disruption budgets and surge protections.</li>
+<li>Improvements in observability for service owners.</li>
+<li>Better channel retention strategies, such as <em>time based retention</em>.</li>
+</ul>
+<h2 id="conclusion">Conclusion</h2>
+<p>At Cliqz, Hydra runs in production and handles data for a variety of data-hungry
+services deployed in our search stack. It drives part of our search index
+which is updated weekly (window-based) as part of our multi-tier lambda architecture<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>.</p>
+<p>Through this post, we wanted to highlight the common challenges in data
+management and how we solve them using Hydra.
+We plan to share more details in future posts.</p>
+<p>Hydra is still under active development and will eventually be open sourced.
+We believe, that the Kubernetes and ML community can greatly benefit from
+an end-to-end model management versioning and propagation system.</p>
+<h2 id="footnotes-and-remarks">Footnotes and Remarks</h2>
+<section class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1" role="doc-endnote">
+<p><a href="https://0x65.dev/blog/2019-12-14/the-architecture-of-a-large-scale-web-search-engine-circa-2019.html" target="_blank" rel="noopener noreffer">The Architecture of a Large-Scale Web Search Engine, circa 2019</a>. <a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</section>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2020-05-27&nbsp;<a class="git-hash" href="https://github.com/faheem-nadeem/commit/e888ddc028623fc183ea7b93d75700f29585549c" target="_blank" title="commit by Faheem Nadeem(faheem@cliqz.com) e888ddc028623fc183ea7b93d75700f29585549c: Initial commit">
+                                    <i class="fas fa-hashtag fa-fw"></i>e888ddc</a></span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="../hydra/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="https://faheem-nadeem.github.io/hydra/" data-title="Hydra—Kubernetes based Dataset PubSub and Volume Management System" data-via="faheemnadeem" data-hashtags="machine learning,model management,data versioning,pub sub,kubernetes"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="https://faheem-nadeem.github.io/hydra/" data-hashtag="machine learning"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="Share on WhatsApp" data-sharer="whatsapp" data-url="https://faheem-nadeem.github.io/hydra/" data-title="Hydra—Kubernetes based Dataset PubSub and Volume Management System" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="https://faheem-nadeem.github.io/hydra/" data-title="Hydra—Kubernetes based Dataset PubSub and Volume Management System"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.12.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="https://faheem-nadeem.github.io/hydra/" data-title="Hydra—Kubernetes based Dataset PubSub and Volume Management System" data-image="/images/posts/hydra/thumbnail.png"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="Share on Myspace" data-sharer="myspace" data-url="https://faheem-nadeem.github.io/hydra/" data-title="Hydra—Kubernetes based Dataset PubSub and Volume Management System" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.12.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="Share on Blogger" data-sharer="blogger" data-url="https://faheem-nadeem.github.io/hydra/" data-title="Hydra—Kubernetes based Dataset PubSub and Volume Management System" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="Share on Evernote" data-sharer="evernote" data-url="https://faheem-nadeem.github.io/hydra/" data-title="Hydra—Kubernetes based Dataset PubSub and Volume Management System"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="../tags/machine-learning/">machine learning</a>,&nbsp;<a href="../tags/model-management/">model management</a>,&nbsp;<a href="../tags/data-versioning/">data versioning</a>,&nbsp;<a href="../tags/pub-sub/">pub sub</a>,&nbsp;<a href="../tags/kubernetes/">kubernetes</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="../">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="../architecture-of-large-scale-web-search-engine/" class="prev" rel="prev" title="The Architecture of a Large-Scale Web Search Engine"><i class="fas fa-angle-left fa-fw"></i>The Architecture of a Large-Scale Web Search Engine</a>
+            <a href="../syntax/" class="next" rel="next" title="Ultimate Guide to Markdown">Ultimate Guide to Markdown<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+</article></div>
+            </main></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css"><style>.lg-toolbar .lg-icon::after { color: #999; }</style><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.0/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.1.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.0.1/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":10},"comment":{},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true}};</script><script type="text/javascript" src="../js/theme.min.js"></script></body>
+</html>

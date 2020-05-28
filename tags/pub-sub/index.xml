@@ -1,0 +1,17 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>pub sub - Tag - Software Tech Blog</title>
+        <link>https://faheem-nadeem.github.io/tags/pub-sub/</link>
+        <description>pub sub - Tag - Software Tech Blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>en</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Sun, 15 Dec 2019 00:00:00 &#43;0000</lastBuildDate><atom:link href="https://faheem-nadeem.github.io/tags/pub-sub/" rel="self" type="application/rss+xml" /><item>
+    <title>Hydra—Kubernetes based Dataset PubSub and Volume Management System</title>
+    <link>https://faheem-nadeem.github.io/hydra/</link>
+    <pubDate>Sun, 15 Dec 2019 00:00:00 &#43;0000</pubDate>
+    <author>Author</author>
+    <guid>https://faheem-nadeem.github.io/hydra/</guid>
+    <description><![CDATA[<div class="featured-image">
+                <img src="/images/posts/hydra/thumbnail.png" referrerpolicy="no-referrer">
+            </div>In the previous articles of this advent series, we described the architecture of our search engine and highlighted technologies which help us serve search results.
+After many iterations on our architecture, we are finally on a microservice architecture pattern, driven through a container orchestration platform: Kubernetes. This brought us many engineering improvements, but it also has introduced new challenges, such as, the ability to perform a dataset propogation via Pub-Sub, along with volume management for microservices.]]></description>
+</item></channel>
+</rss>

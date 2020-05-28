@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>Why Kubeflow In Your Infrastructure - Software Tech Blog</title><meta name="Description" content="Why Kubeflow In Your Infrastructure."><meta property="og:title" content="Why Kubeflow In Your Infrastructure" />
+<meta property="og:description" content="Why Kubeflow In Your Infrastructure." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/" />
+<meta property="og:image" content="https://faheem-nadeem.github.io/images/posts/kubeflow/architecture.png" />
+<meta property="article:published_time" content="2018-11-09T01:57:04+02:00" />
+<meta property="article:modified_time" content="2020-05-27T15:10:10+02:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://faheem-nadeem.github.io/images/posts/kubeflow/architecture.png"/>
+
+<meta name="twitter:title" content="Why Kubeflow In Your Infrastructure"/>
+<meta name="twitter:description" content="Why Kubeflow In Your Infrastructure."/>
+<meta name="application-name" content="Software Tech Blog">
+<meta name="apple-mobile-web-app-title" content="Software Tech Blog"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="../favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png"><link rel="mask-icon" href="../safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="../site.webmanifest"><link rel="canonical" href="https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/" /><link rel="next" href="https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="../css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "Why Kubeflow In Your Infrastructure",
+        "inLanguage": "en",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/faheem-nadeem.github.io\/why_kubeflow_in_your_infrastructure\/"
+        },"image": {
+                "@type": "ImageObject",
+                "url": "https:\/\/faheem-nadeem.github.io\/cover.png",
+                "width":  800 ,
+                "height":  600 
+            },"genre": "posts","keywords": "kubeflow, machine learning, kubernetes, infrastructure, deep learning","wordcount":  1661 ,
+        "url": "https:\/\/faheem-nadeem.github.io\/why_kubeflow_in_your_infrastructure\/","datePublished": "2018-11-09T01:57:04+02:00","dateModified": "2020-05-27T15:10:10+02:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+                "@type": "Organization",
+                "name": "xxxx",
+                "logo": {
+                "@type": "ImageObject",
+                "url": "https:\/\/faheem-nadeem.github.io\/logo.png",
+                "width":  127 ,
+                "height":  40 
+                }
+            },"author": {
+                "@type": "Person",
+                "name": "faheem"
+            },"description": "Why Kubeflow In Your Infrastructure."
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="../" title="Software Tech Blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>Software Tech Blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="../posts/"> Posts </a><a class="menu-item" href="../tags/"> Tags </a><a class="menu-item" href="../categories/"> Categories </a><a class="menu-item" href="https://github.com/faheem-nadeem" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="../" title="Software Tech Blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>Software Tech Blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><a class="menu-item" href="../posts/" title="">Posts</a><a class="menu-item" href="../tags/" title="">Tags</a><a class="menu-item" href="../categories/" title="">Categories</a><a class="menu-item" href="https://github.com/faheem-nadeem" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">Why Kubeflow In Your Infrastructure</h1><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="../" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>faheem</a></span>&nbsp;<span class="post-category">included in <a href="../categories/kubeflow/"><i class="far fa-folder fa-fw"></i>kubeflow</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2018-11-09">2018-11-09</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;1661 words&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;8 minutes&nbsp;</div>
+        </div><div class="featured-image"><img
+        class="lazyload"
+        src="../svg/loading/normal.min.svg"
+        data-src="../images/posts/kubeflow/architecture.png"
+        data-srcset="../images/posts/kubeflow/architecture.png, ../images/posts/kubeflow/architecture.png 1.5x, ../images/posts/kubeflow/architecture.png 2x"
+        data-sizes="auto"
+        alt="Why Kubeflow In Your Infrastructure."
+        title="Why Kubeflow In Your Infrastructure." /></div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#know-thy-users">Know Thy Users</a></li>
+    <li><a href="#consistency-in-infrastructure">Consistency in Infrastructure</a></li>
+    <li><a href="#multiple-use-cases">Multiple Use Cases</a></li>
+    <li><a href="#on-boarding-ease">On-boarding ease</a></li>
+    <li><a href="#secure-and-better-control-over-infrastructure">Secure and Better control over Infrastructure</a></li>
+    <li><a href="#missing-features">Missing Features</a></li>
+    <li><a href="#billing-of-cloud-resources-per-pod--service">Billing of cloud resources per pod / service</a></li>
+    <li><a href="#conformance-with-other-package-managers-ex-helm">Conformance with other package managers (Ex. Helm)</a></li>
+    <li><a href="#resource-utilization-by-the-training--serving-modules">Resource utilization by the Training / Serving modules</a></li>
+    <li><a href="#configurable-tear-down-of-infrastructure-after-use">Configurable tear down of Infrastructure after use</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>CEOs and CTOs are being challenged by customers, analysts and investors to define how Artificial Intelligence and Machine Learning will impact their revenues and costs. The leading research and development organizations are quickly migrating to open source machine learning frameworks, especially those that take advantage of the operational and infrastructure efficiencies provided by containers, micro-services and <a href="https://kubernetes.io" target="_blank" rel="noopener noreffer">Kubernetes</a>. This trend is demonstrated in a recent <a href="https://www.zdnet.com/article/kubernetes-leads-container-orchestration/" target="_blank" rel="noopener noreffer">451 Research survey</a> which found that over 70% of enterprise organizations surveyed are using Kubernetes. GitHub has over <a href="https://octoverse.github.com/projects" target="_blank" rel="noopener noreffer">95M projects</a>, and Kubernetes and Tensorflow are frequently in the top 10 projects, in terms of contributors, discussions, forks, and reviews. With an ever increasing availability of data and compute power, machine learning is turning out to be a powerful tool to solve various problems and helping achieve state of the art results. In such interesting times, <a href="https://www.kubeflow.org/" target="_blank" rel="noopener noreffer">Kubeflow</a> has grown very quickly to be one of the most promising ML toolkits in the cloud native open source world.</p>
+<p>We at <a href="https://cliqz.com" target="_blank" rel="noopener noreffer">Cliqz</a> (a privacy focussed web browser with built-in web search operational in ~7 countries) are also solving some of the most complex problems around user privacy and web search using self managed Kubernetes (<a href="https://github.com/kubernetes/kops" target="_blank" rel="noopener noreffer">kops</a>) on AWS. Since January 2017, we started our cloud native journey and have been building Web Search solutions using Kubernetes. Since December 2017, the Search-Recency system has been in production, helping us towards near-real time index updates leading to most recent and up-to-date search results. To solve this problem at that scale, we heavily use Machine Learning, Natural Language Processing, Deep Learning and core Information Retrieval techniques which led us to explore Kubeflow. We are currently evaluating Kubeflow as a general alternative to our custom ML workflow. We would like to present some initial assessments and how Kubeflow might work well for one’s k8s infrastructure are highlighted below:</p>
+<h2 id="know-thy-users">Know Thy Users</h2>
+<p>It’s important that the target audience which would be interested in Kubeflow should be looked up closely. Most organizations which have an established infrastructure might be reluctant to even move to kubernetes. For example, it took a good amount of time for most teams to migrate to Terraform based deployments and because of this investment in time, switching to kubernetes is sometimes not appreciated. For a cloud native strategy where Kubernetes is preferred, Kubeflow becomes a good candidate for deploying and working with ML components. This brings to light, the following types of teams who can potentially be interested:</p>
+<ul>
+<li>A team (within an organization) starting out their cloud native journey with K8s, who might want to leverage the consistency offered by Kubeflow for ML workloads for new projects.</li>
+<li>A very early stage startup which has started out with K8s as base.</li>
+<li>Teams interested in ML at Scale and want to ease deployment of existing multiple services and reduce management of resources by switching to kubeflow and k8s.</li>
+<li>Research Teams / Institutes who want to minimize the complexity of managing an infrastructure for a data scientist or a researcher and instead provide a clean and consistent interface which eases setting things up using a few clicks.
+*Teams interested in on-premise / multi-cloud deployments where there is no service offered which can provide a consistent experience.</li>
+</ul>
+<h2 id="consistency-in-infrastructure">Consistency in Infrastructure</h2>
+<p>One of the greatest advantage of using a k8s based deployment is the consistency and features offered out of the box. Often times each new service tries to implement the same fundamental requisites: monitoring, health checks, replication etc. Kubeflow provides a native way to extend the same features to an organization’s ML needs. This is particularly useful to augment existing services without rewriting deployments from scratch. Having Kubeflow in the organization means one needs to worry more on the problem at hand and less worry about how to set things up and manage it over time.</p>
+<h2 id="multiple-use-cases">Multiple Use Cases</h2>
+<ul>
+<li>Team is researching a problem which can be solved with an ML technique. They just can focus on the problem and not on the infrastructure. A Jupyter Notebook pinned to a GPU instance or a cluster abstracts this out cleanly. Several Researchers can work on shared notebooks and also use the same data backends instead of copying the data over to individual instances.
+Road to production for ML projects is simplified. The end to end solution offered in Kubeflow helps to productionize an ML model in the fastest way. This allows a team of researchers to finish testing a model for accuracy on a Jupyter Notebook, Build a continuous data pipeline to keep this model updated via argo and then test production workloads using Serving / Seldon.</li>
+<li><a href="https://github.com/kubeflow/katib" target="_blank" rel="noopener noreffer">Katib</a> can be a central solution for hyper parameter tuning across several applications. Hyperparameter optimization is one of the most underappreciated yet most important aspects of machine learning. Katib provides the ground framework to extend this to multiple applications and have a shared view of this tuning with historical data. For example <a href="https://github.com/hyperopt/hyperopt" target="_blank" rel="noopener noreffer">Hyperopt</a> is a python library for such optimizations, but it largely is limited to only the scope of the project. For an organization where multiple teams and services are backed by ML they can leverage the common interface which Katib provides to learn more complex but powerful optimizations which can significantly impact the product at large. Also having an infrastructure leads to more teams trying out implementing some solution which can leverage the benefits offered via such optimization.</li>
+<li>With multiple frameworks being supported (<a href="https://www.tensorflow.org/" target="_blank" rel="noopener noreffer">Tensorflow</a>, <a href="https://pytorch.org/" target="_blank" rel="noopener noreffer">PyTorch</a> and <a href="https://mxnet.apache.org/" target="_blank" rel="noopener noreffer">Mxnet</a>), writing a distributed training or serving application ((TFServing)[https://www.tensorflow.org/serving/] or <a href="https://www.seldon.io/" target="_blank" rel="noopener noreffer">Seldon</a>) becomes a lot more easier.</li>
+</ul>
+<h2 id="on-boarding-ease">On-boarding ease</h2>
+<p>It becomes easier to onboard a new developer and a researcher to introduce him to a single cloud independent platform. One can provide templates for deployment based on tasks, which can be easily scheduled on low cost infrastructure as compared to starting instances for test applications. Even for ML workloads, the researcher or a research engineer can abstract the use-case effectively without worrying about underlying cloud deployment.</p>
+<h2 id="secure-and-better-control-over-infrastructure">Secure and Better control over Infrastructure</h2>
+<p>In an organization, moving towards K8s, helps to standardize some processes. Not only one can make the infrastructure more secure, but can also achieve better control over the same.</p>
+<h2 id="missing-features">Missing Features</h2>
+<p>We would also like to highlight some requested features (currently missing) for an enterprise rollout.</p>
+<h2 id="billing-of-cloud-resources-per-pod--service">Billing of cloud resources per pod / service</h2>
+<p>Currently, when using a cloud provider one is billed per instance or resource used. If the resources are properly tagged the billing works perfectly. Most teams and organizations use this information for cost assessments per project or per team and also view this as an opportunity to minimize costs wherever possible. In a Kubernetes based world, this slightly changes. Its highly likely that on the same base instance a number of other pods are scheduled and this may mean that the resources are shared by teams or projects. Now this helps with resource utilization but it also means we do not have a view of the resource usage per project. In ideal world, teams can be charged on average, but this may not work in practice as its highly likely the resource utilization varies.</p>
+<h2 id="conformance-with-other-package-managers-ex-helm">Conformance with other package managers (Ex. Helm)</h2>
+<p>We use <a href="https://helm.sh/" target="_blank" rel="noopener noreffer">Helm</a> for almost all our package management needs. With features like templating, release management, upgrades and rollback. It forms the backbone of how we deploy our services and even core addons on our k8s cluster. We operate multiple clusters, spread across various regions / availability zones, housing production, staging and dev workloads. Helm allows us to schedule workloads on these clusters seamlessly by utilizing its decent templating support. When working with Kubeflow, Helm is not supported by default. Although, <a href="https://ksonnet.io/" target="_blank" rel="noopener noreffer">ksonnet</a> is feature rich, using it means that we break our tried and tested helm workflow. The rationale of choosing helm was its popularity (CNCF Project, 7800+ Stars, 382 Contributors), incredible community support and public chart store which provides a good starting point to install packages into K8s cluster with ease. This speeds up initial development, as one can easily modify charts / inject values and get an enterprise grade deployment ready in limited time, geared towards ones organisation practices. We believe that a lot of teams using k8s might have the same mindset and a proper helm support for Kubeflow might be of interest to many.</p>
+<h2 id="resource-utilization-by-the-training--serving-modules">Resource utilization by the Training / Serving modules</h2>
+<p>There is a need to understand the amount of compute resources being used by a said workload inside a k8s cluster. Can a deep learning training task using some GPU / Memory / CPU, can allow another task (e.g. Serving) to be allocated on the same GPU / node pools. Shared allocation requires continuous monitoring/probing of resources that should result in useful metrics, which can be used to gauge infrastructure scaling events and cost estimations.</p>
+<h2 id="configurable-tear-down-of-infrastructure-after-use">Configurable tear down of Infrastructure after use</h2>
+<p>An interesting theme, common to all teams as described before is cost control. Large or small organizations alike would like to only pay for infrastructure, till its useful. Which means if cloud instances / resources are not used anymore then its best to shut them down. Since cloud infrastructure is not directly tied to the lifecycle of the service, even after a training job (TFJob) finishes, the instances are left idle. This might incur unnecessary cost to an organization. Also native solution around scheduled downscaling of Serving Infrastructure during low RPS or using spot instances (targeted instance choices) for marginal redundancy can help significantly in cost reduction. These use-cases are common to a K8s app and we can write custom auto-scalers and/or bring about improvements to upstream auto-scalers to ease Kubeflow adoption significantly.</p>
+<p>We truly believe that Kubernetes is the tool to truly democratize big data and AI. Toolkits like Kubeflow really reinforces the dream where running AI tasks and serving them is not just limited to a handful of organizations but it is easily accessible to everyone. We would like to continue our efforts towards exploring Kubeflow, as we plan to ship it in our production cluster soon.</p>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2020-05-27&nbsp;<a class="git-hash" href="https://github.com/faheem-nadeem/commit/e888ddc028623fc183ea7b93d75700f29585549c" target="_blank" title="commit by Faheem Nadeem(faheem@cliqz.com) e888ddc028623fc183ea7b93d75700f29585549c: Initial commit">
+                                    <i class="fas fa-hashtag fa-fw"></i>e888ddc</a></span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="../why_kubeflow_in_your_infrastructure/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/" data-title="Why Kubeflow In Your Infrastructure" data-via="faheemnadeem" data-hashtags="kubeflow,machine learning,kubernetes,infrastructure,deep learning"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/" data-hashtag="kubeflow"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="Share on WhatsApp" data-sharer="whatsapp" data-url="https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/" data-title="Why Kubeflow In Your Infrastructure" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/" data-title="Why Kubeflow In Your Infrastructure"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.12.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/" data-title="Why Kubeflow In Your Infrastructure" data-image="/images/posts/kubeflow/architecture.png"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="Share on Myspace" data-sharer="myspace" data-url="https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/" data-title="Why Kubeflow In Your Infrastructure" data-description="Why Kubeflow In Your Infrastructure."><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.12.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="Share on Blogger" data-sharer="blogger" data-url="https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/" data-title="Why Kubeflow In Your Infrastructure" data-description="Why Kubeflow In Your Infrastructure."><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="Share on Evernote" data-sharer="evernote" data-url="https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/" data-title="Why Kubeflow In Your Infrastructure"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="../tags/kubeflow/">kubeflow</a>,&nbsp;<a href="../tags/machine-learning/">machine learning</a>,&nbsp;<a href="../tags/kubernetes/">kubernetes</a>,&nbsp;<a href="../tags/infrastructure/">infrastructure</a>,&nbsp;<a href="../tags/deep-learning/">deep learning</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="../">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav">
+            <a href="../architecture-of-large-scale-web-search-engine/" class="next" rel="next" title="The Architecture of a Large-Scale Web Search Engine">The Architecture of a Large-Scale Web Search Engine<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+</article></div>
+            </main></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css"><style>.lg-toolbar .lg-icon::after { color: #999; }</style><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.0/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.1.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.0.1/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":10},"comment":{},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true}};</script><script type="text/javascript" src="../js/theme.min.js"></script></body>
+</html>

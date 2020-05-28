@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="robots" content="noodp" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge, chrome=1">
+        <title>The Architecture of a Large-Scale Web Search Engine - Software Tech Blog</title><meta name="Description" content="A tech blog about all things software, cloud, cloud native stack, search and distributed systems"><meta property="og:title" content="The Architecture of a Large-Scale Web Search Engine" />
+<meta property="og:description" content="In previous posts of this series, we have described some of the technologies that power our private search products. It is about time that we introduce the systems that bring everything together. It is important to understand that a web scale search engine is highly complex. It is a distributed system with strong constraints on performance and latency. On top of that it can easily become extremely costly to operate; both in human resource and, of course, in money." />
+<meta property="og:type" content="article" />
+<meta property="og:url" content="https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/" />
+<meta property="og:image" content="https://faheem-nadeem.github.io/images/posts/architecture-of-large-scale-web-search-engine/serp.gif" />
+<meta property="article:published_time" content="2019-12-14T00:00:00+00:00" />
+<meta property="article:modified_time" content="2020-05-27T15:10:10+02:00" />
+<meta name="twitter:card" content="summary_large_image"/>
+<meta name="twitter:image" content="https://faheem-nadeem.github.io/images/posts/architecture-of-large-scale-web-search-engine/serp.gif"/>
+
+<meta name="twitter:title" content="The Architecture of a Large-Scale Web Search Engine"/>
+<meta name="twitter:description" content="In previous posts of this series, we have described some of the technologies that power our private search products. It is about time that we introduce the systems that bring everything together. It is important to understand that a web scale search engine is highly complex. It is a distributed system with strong constraints on performance and latency. On top of that it can easily become extremely costly to operate; both in human resource and, of course, in money."/>
+<meta name="application-name" content="Software Tech Blog">
+<meta name="apple-mobile-web-app-title" content="Software Tech Blog"><meta name="theme-color" content="#ffffff"><meta name="msapplication-TileColor" content="#da532c"><link rel="shortcut icon" type="image/x-icon" href="../favicon.ico" />
+        <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png"><link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png"><link rel="mask-icon" href="../safari-pinned-tab.svg" color="#5bbad5"><link rel="manifest" href="../site.webmanifest"><link rel="canonical" href="https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/" /><link rel="prev" href="https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/" /><link rel="next" href="https://faheem-nadeem.github.io/hydra/" /><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/normalize.css@8.0.1/normalize.min.css"><link rel="stylesheet" href="../css/style.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.13.0/css/all.min.css"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.7.2/animate.min.css"><script type="application/ld+json">
+    {
+        "@context": "http://schema.org",
+        "@type": "BlogPosting",
+        "headline": "The Architecture of a Large-Scale Web Search Engine",
+        "inLanguage": "en",
+        "mainEntityOfPage": {
+            "@type": "WebPage",
+            "@id": "https:\/\/faheem-nadeem.github.io\/architecture-of-large-scale-web-search-engine\/"
+        },"image": {
+                "@type": "ImageObject",
+                "url": "https:\/\/faheem-nadeem.github.io\/cover.png",
+                "width":  800 ,
+                "height":  600 
+            },"genre": "posts","keywords": "realtime, kubernetes, machine learning, cloud native, oss","wordcount":  7048 ,
+        "url": "https:\/\/faheem-nadeem.github.io\/architecture-of-large-scale-web-search-engine\/","datePublished": "2019-12-14T00:00:00+00:00","dateModified": "2020-05-27T15:10:10+02:00","license": "This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.","publisher": {
+                "@type": "Organization",
+                "name": "xxxx",
+                "logo": {
+                "@type": "ImageObject",
+                "url": "https:\/\/faheem-nadeem.github.io\/logo.png",
+                "width":  127 ,
+                "height":  40 
+                }
+            },"author": {
+                "@type": "Person",
+                "name": "faheem"
+            },"description": ""
+    }
+    </script></head>
+    <body header-desktop="fixed" header-mobile="auto"><script type="text/javascript">(window.localStorage && localStorage.getItem('theme') ? localStorage.getItem('theme') === 'dark' : ('auto' === 'auto' ? window.matchMedia('(prefers-color-scheme: dark)').matches : 'auto' === 'dark')) && document.body.setAttribute('theme', 'dark');</script>
+
+        <div id="mask"></div><div class="wrapper"><header class="desktop" id="header-desktop">
+    <div class="header-wrapper">
+        <div class="header-title">
+            <a href="../" title="Software Tech Blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>Software Tech Blog</a>
+        </div>
+        <div class="menu">
+            <div class="menu-inner"><a class="menu-item" href="../posts/"> Posts </a><a class="menu-item" href="../tags/"> Tags </a><a class="menu-item" href="../categories/"> Categories </a><a class="menu-item" href="https://github.com/faheem-nadeem" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i>  </a><span class="menu-item delimiter"></span><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                    <i class="fas fa-adjust fa-fw"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</header><header class="mobile" id="header-mobile">
+    <div class="header-container">
+        <div class="header-wrapper">
+            <div class="header-title">
+                <a href="../" title="Software Tech Blog"><span class="header-title-pre"><i class='far fa-kiss-wink-heart fa-fw'></i></span>Software Tech Blog</a>
+            </div>
+            <div class="menu-toggle" id="menu-toggle-mobile">
+                <span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="menu" id="menu-mobile"><a class="menu-item" href="../posts/" title="">Posts</a><a class="menu-item" href="../tags/" title="">Tags</a><a class="menu-item" href="../categories/" title="">Categories</a><a class="menu-item" href="https://github.com/faheem-nadeem" title="GitHub" rel="noopener noreffer" target="_blank"><i class='fab fa-github fa-fw'></i></a><a href="javascript:void(0);" class="menu-item theme-switch" title="Switch Theme">
+                <i class="fas fa-adjust fa-fw"></i>
+            </a></div>
+    </div>
+</header>
+<div class="search-dropdown desktop">
+    <div id="search-dropdown-desktop"></div>
+</div>
+<div class="search-dropdown mobile">
+    <div id="search-dropdown-mobile"></div>
+</div>
+<main class="main">
+                <div class="container"><div class="toc" id="toc-auto">
+            <h2 class="toc-title">Contents</h2>
+            <div class="toc-content always-active" id="toc-content-auto"></div>
+        </div><article class="page single"><h1 class="single-title animated flipInX">The Architecture of a Large-Scale Web Search Engine</h1><h2 class="single-subtitle">Our Journey to Microservices, Kubernetes and beyond.</h2><div class="post-meta">
+            <div class="post-meta-line"><span class="post-author"><a href="../" title="Author" rel=" author" class="author"><i class="fas fa-user-circle fa-fw"></i>faheem</a></span>&nbsp;<span class="post-category">included in <a href="../categories/search/"><i class="far fa-folder fa-fw"></i>search</a></span></div>
+            <div class="post-meta-line"><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime="2019-12-14">2019-12-14</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;7048 words&nbsp;
+                <i class="far fa-clock fa-fw"></i>&nbsp;34 minutes&nbsp;</div>
+        </div><div class="featured-image"><img
+        class="lazyload"
+        src="../svg/loading/normal.min.svg"
+        data-src="../images/posts/architecture-of-large-scale-web-search-engine/serp.gif"
+        data-srcset="../images/posts/architecture-of-large-scale-web-search-engine/serp.gif, ../images/posts/architecture-of-large-scale-web-search-engine/serp.gif 1.5x, ../images/posts/architecture-of-large-scale-web-search-engine/serp.gif 2x"
+        data-sizes="auto"
+        alt="/images/posts/architecture-of-large-scale-web-search-engine/serp.gif"
+        title="/images/posts/architecture-of-large-scale-web-search-engine/serp.gif" /></div><div class="details toc" id="toc-static"  kept="">
+                <div class="details-summary toc-title">
+                    <span>Contents</span>
+                    <span><i class="details-icon fas fa-angle-right"></i></span>
+                </div>
+                <div class="details-content toc-content" id="toc-content-static"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#our-search-experience---dropdown--serp">Our Search Experience - Dropdown &amp; SERP</a>
+      <ul>
+        <li><a href="#search-as-you-type">Search-as-you-type</a></li>
+        <li><a href="#search-in-serp">Search in SERP</a></li>
+      </ul>
+    </li>
+    <li><a href="#fully-automated-and-near-real-time-search">Fully Automated and Near Real-time Search</a></li>
+    <li><a href="#deployments---a-historical-context">Deployments - A Historical Context</a></li>
+    <li><a href="#intricacies-of-a-search-system">Intricacies of a Search System</a></li>
+    <li><a href="#docker-containers-and-container-orchestration-system">Docker Containers and Container Orchestration System</a></li>
+    <li><a href="#kubernetes---the-cliqz-stack">Kubernetes - The Cliqz Stack</a>
+      <ul>
+        <li><a href="#kops---kubernetes-orchestration">KOPS - Kubernetes Orchestration</a></li>
+        <li><a href="#weave-net---network-overlay">Weave Net - Network Overlay</a></li>
+        <li><a href="#helm--helmfile---package-management-and-delivery">Helm / Helmfile - Package management and delivery</a></li>
+        <li><a href="#tilt--k9s---no-stress-local-kubernetes-development">Tilt / K9s - No stress local Kubernetes development</a></li>
+        <li><a href="#prometheus-alertmanager-jaeger-grafana-and-loki---observability">Prometheus, AlertManager, Jaeger, Grafana and Loki - Observability</a></li>
+        <li><a href="#luigi-and-jenkins---automating-data-pipelines">Luigi and Jenkins - Automating Data-pipelines</a></li>
+        <li><a href="#addon-projects">Addon Projects</a></li>
+      </ul>
+    </li>
+    <li><a href="#local-development-with-tilt---an-end-to-end-use-case">Local Development with Tilt - An end to end use case</a></li>
+    <li><a href="#optimizing-costs">Optimizing Costs</a></li>
+    <li><a href="#machine-learning-systems">Machine Learning Systems</a>
+      <ul>
+        <li><a href="#kubeflow-use-case">Kubeflow use-case</a></li>
+      </ul>
+    </li>
+    <li><a href="#final-words">Final Words</a></li>
+    <li><a href="#remarks-and-references">Remarks and references</a></li>
+  </ul>
+</nav></div>
+            </div><div class="content" id="content"><p>In <a href="https://0x65.dev/" target="_blank" rel="noopener noreffer">previous posts</a> of this series, we have described some of the technologies that
+power our private <a href="https://cliqz.com/#channel=blog" target="_blank" rel="noopener noreffer">search products</a>.
+It is about time that we introduce the systems that
+bring everything together. It is important to understand that a web scale search engine
+is highly complex. It is a distributed system with strong constraints on
+performance and latency. On top of that it can easily become extremely costly
+to operate; both in human resource and, of course, in money.</p>
+<p>This article explores the technology stack we employ today and some of
+our choices and decisions, which have been taken and iterated upon over the
+years, to cater both external and internal users.</p>
+<p>The topic at hand is very broad and cannot be covered in a single sitting,
+but we hope to give you the gist of it.</p>
+<p>We use a combination of prominent open source and cloud-native technologies wrapped
+with home grown tooling, which have been battle tested. Places where we haven&rsquo;t
+found a solution in the open source world or commercial efforts, we have been
+prepared to dive deep and write some core systems from scratch, which has
+worked well for us at our scale.</p>
+<p><strong>Disclaimer:</strong> We describe how our system is, as of today. Of course we did not
+start like this. We had multiple architectural overhauls throughout the years,
+always considering constraints like costs, traffic and data size. By no
+means, we would suggest that this is a recipe to build a search engine;
+it is what is working today, as wiser people said:</p>
+<blockquote>
+<p>&ldquo;Premature optimization is the root of all evil&rdquo; ~ Donald Knuth</p>
+</blockquote>
+<p>And we agree wholeheartedly. As matter of fact, we really advise anyone,
+to never try to throw all the ingredients to the pot at once.
+But instead to add them one by one; slowly and incrementally adding complexity one step at a time.</p>
+<p>Given the nature of this post, we want to provide an ordered outline of all topics
+covered:</p>
+<ul>
+<li>Cliqz search as a product and its system requirements.</li>
+<li>Web Search Systems: A near real-time and truly automated search system.</li>
+<li>Data Processing Platform: Facilitating near Real-time and Batch Indexing.</li>
+<li>How deployments were done in the past? The Pros and Cons of various approaches.</li>
+<li>Microservices Architecture: Orchestrating services involved to deliver content
+for a search engine result page.</li>
+<li>Our need for using containers and a container orchestration system (Kubernetes).</li>
+<li>Introduce our Kubernetes stack - How we deploy, run and manage Kubernetes and
+various add-ons and the problems they solve for us.</li>
+<li>Local Development on Kubernetes - An end to end use case.</li>
+<li>Optimizing on Costs.</li>
+<li>Machine Learning Systems.</li>
+</ul>
+<h2 id="our-search-experience---dropdown--serp">Our Search Experience - Dropdown &amp; SERP</h2>
+<p>The search engine at Cliqz has two consumers with different requirements.</p>
+<h3 id="search-as-you-type">Search-as-you-type</h3>
+<p><img
+        class="lazyload"
+        src="../svg/loading/small.min.svg"
+        data-src="../images/posts/architecture-of-large-scale-web-search-engine/ext.png"
+        data-srcset="../images/posts/architecture-of-large-scale-web-search-engine/ext.png, ../images/posts/architecture-of-large-scale-web-search-engine/ext.png 1.5x, ../images/posts/architecture-of-large-scale-web-search-engine/ext.png 2x"
+        data-sizes="auto"
+        alt="Figure 1: Cliqz Dropdown in the Browser"
+        title="Figure 1: Cliqz Dropdown in the Browser" /></p>
+<p>The search in the browser address bar<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup>, with results available on
+the dropdown. This type of search requires fewer results (typically 3) but is
+extremely latency sensitive (less than 150 ms); otherwise the user experience suffers.</p>
+<h3 id="search-in-serp">Search in SERP</h3>
+<p><img
+        class="lazyload"
+        src="../svg/loading/small.min.svg"
+        data-src="../images/posts/architecture-of-large-scale-web-search-engine/serp.gif"
+        data-srcset="../images/posts/architecture-of-large-scale-web-search-engine/serp.gif, ../images/posts/architecture-of-large-scale-web-search-engine/serp.gif 1.5x, ../images/posts/architecture-of-large-scale-web-search-engine/serp.gif 2x"
+        data-sizes="auto"
+        alt="Figure 2: Cliqz Search Engine Result Page"
+        title="Figure 2: Cliqz Search Engine Result Page" /></p>
+<p>Search on a <a href="https://cliqz.com/#channel=blog" target="_blank" rel="noopener noreffer">web page</a>, the typical search engine results
+page everybody knows. In here, the depth of the search is unbounded but it is
+less demanding on latency (less than 1000 ms) as compared to the dropdown version.</p>
+<h2 id="fully-automated-and-near-real-time-search">Fully Automated and Near Real-time Search</h2>
+<p>Consider a query like <em>“bayern munich”</em>. Now, this may seem a very generic
+query, but when issued, it touches several services within our system. If we try
+to interpret the intent from the query, we will figure out that the user may be:</p>
+<ul>
+<li>Researching about the club (in which case a Wikipedia snippet would be relevant)</li>
+<li>Interested in booking tickets, buy merchandise, register as an official fan (Official Website)</li>
+<li>Interested in current news about the club:
+<ul>
+<li>Pre-Match news about the game</li>
+<li>In-game information like: Live Scores, Live Updates or Commentary.</li>
+<li>Post-match analysis about the game</li>
+<li>Off-season Information about the inner workings of the club and activity during the transfer window, hiring new coaches etc.</li>
+</ul>
+</li>
+<li>Searching for old web-pages and content, club history, record of past games, etc.</li>
+</ul>
+<p>As one might observe, this is much more than finding relevant pages. Not only
+should the information requested be semantically relevant, but it should be
+relevant w.r.t time. Recency or Temporal Sensitivity in search is a very
+important factor for the user experience.</p>
+<p>To make this a coherent experience, the information must be made available from
+different sources and transformed into a search-able index in near real-time. We
+need to ensure that all models, indexes and assets are up-to-date (e.g. Loading
+of images must reflect the current events and keep the title and content
+up-to-date with respect to a developing story). <strong>As hard as it may seem to
+execute successfully at scale, we strongly believe that our users should always
+be presented with up-to-date information, this intuition forms the basis of our
+overall system architecture.</strong></p>
+<p>The data processing and serving platform at Cliqz follows a multi-tiered Lambda
+Architecture. It is composed of three tiers based on the recency of the content
+being indexed. They are:</p>
+<ol>
+<li>
+<p><strong>Near Real-time Indexing</strong></p>
+<ul>
+<li>Fully automated and powered using <a href="https://kafka.apache.org" target="_blank" rel="noopener noreffer">Kafka</a> (Producer, Consumers and Stream
+Processors), <a href="https://cassandra.apache.org" target="_blank" rel="noopener noreffer">Cassandra</a>, Granne<sup id="fnref:2"><a href="#fn:2" class="footnote-ref" role="doc-noteref">2</a></sup> and RocksDB.</li>
+<li>Cassandra stores the Index data in different tables. Records in different
+table have varying Time to Live (TTL), so we can free up the storage as
+the data is re-indexed in later stages.</li>
+<li>This component is also responsible for our trending or popularity driven
+ranking features which help identify trends over a moving window of
+varying time sizes. We accomplish this via stream processing using
+<a href="https://kafka.apache.org/documentation/streams/" target="_blank" rel="noopener noreffer">KafkaStreams</a>.</li>
+<li>All this translates into product features including recent content within
+search results and top news.</li>
+</ul>
+</li>
+<li>
+<p><strong>Weekly or Sliding-Window-Based Batch Indexing</strong></p>
+<ul>
+<li>Based on content of past 60 days.</li>
+<li>Re-indexed weekly (End to End automated pipelines of batch jobs on Jenkins).</li>
+<li>Machine Learning and Data Pipelines are executed upon recent data
+resulting in higher quality of our search results.</li>
+<li>A good framework to test and prototype new ML models and algorithmic
+changes using a subset of data thereby reducing costs of end to end
+experiments on entire data.</li>
+<li>Map-Reduce and Spark based batch workflows managed through Luigi and
+retrospectively managed using Jenkins Pipelines.</li>
+<li>Keyvi, Cassandra, qpick and Granne for serving.</li>
+</ul>
+</li>
+<li>
+<p><strong>Full Batch Index</strong></p>
+<ul>
+<li>Based on all available data</li>
+<li>Re-Indexing: once every 2 months</li>
+<li>MapReduce and Spark based batch workflows managed through Luigi</li>
+<li>Used to train large scale Machine Learning Models over a large data-set.
+e.g.: Query and Word Embeddings, Approximate Nearest Neighbour Models,
+Language Models etc.</li>
+<li>Keyvi, Cassandra, qpick and Granne for serving</li>
+</ul>
+</li>
+</ol>
+<p>What is important to note here is that, Near Real-time and Weekly Index is
+responsible for a large portion of search related content served on SERP. This
+is a similar behavior to other search engines which promote recent content over
+historical content about the topic. The batch index is handling time independent
+queries, long tail of queries and content which is rare, historical or tricky in
+the context of understanding a search query. The combination of the three  gives
+us the necessary ammunition to build Cliqz search in its current form.  All
+systems are capable of answering all the queries, the final results, however, is
+a mixture of the results of all indexes.</p>
+<h2 id="deployments---a-historical-context">Deployments - A Historical Context</h2>
+<blockquote>
+<p>You haven&rsquo;t mastered a tool until you understand when it should not be used. ~
+Kelsey Hightower</p>
+</blockquote>
+<p>From the start, we have been focused on delivering our search services using a
+public cloud provider rather than managing infrastructure on-premises. In the
+last decade, that has become the norm across the industry, given the complexity
+and resources required to operate one&rsquo;s own data center(s) compared with the
+relative ease of hosted services and the ease to digest pay as you go model for
+startups. Amazon Web Services (AWS)<sup id="fnref:3"><a href="#fn:3" class="footnote-ref" role="doc-noteref">3</a></sup> has been convenient for us as it allowed
+to abstract ourselves from managing our own machines and infrastructure. If not
+for AWS, it would have taken us a lot more effort to reach this stage. (But,
+they are as convenient as they are expensive.
+You will see in this article some tricks we came
+up with to reduce costs, but we advise you to be extremely careful using cloud services at
+scale.)</p>
+<p>We typically strive to avoid a managed offering of a service that might be
+useful to us as costs can be unbearably high at the scale we typically operate at.
+To bring in some context let us start from the year 2014. A growing concern that
+we met early on was reliably provisioning resources
+and deploying applications on AWS.</p>
+<p>We started with putting some effort
+into building our own infrastructure and configuration management systems
+on top of AWS. We focused on shipping a solution which was native to
+python to ease developer on-boarding. We wrapped the <strong><a href="https://get.fabric.io" target="_blank" rel="noopener noreffer">Fabric</a></strong> project
+and coupled it with <strong><a href="https://github.com/boto/boto" target="_blank" rel="noopener noreffer">Boto</a></strong> to provide nice interfaces to launch machines
+and configure one&rsquo;s application with few lines of code driven through a
+<em>deploy.py</em> file co-located to the service source. This was then wrapped
+into project template generators for easy onboarding of new projects. Back
+then, it was early days of docker and traditionally we shipped as python
+packages or plain python code which was challenging because of dependency
+management. Even though the project gained a lot of traction and was used
+by many services driving many products at Cliqz, there are certainly
+things a library driven approach to infrastructure and configuration
+management lacks. Global state management, central locking for infra
+changes, no central view of cloud resources utilized by a project or
+developer, reliance on external tools to cleanup orphaned resources,
+limited configuration management, limited observability into developer
+usage, context seep in from regular users of the tool are some of the
+things that created friction and which in turn led to an increased
+operational complexity.</p>
+<p>This led us to explore alternate external solutions as homegrown efforts had to
+be stopped due to limited resources. The alternative we eventually landed on is
+a combination of solutions from <a href="https://www.hashicorp.com" target="_blank" rel="noopener noreffer">Hashicorp</a>
+including <a href="https://www.consul.io" target="_blank" rel="noopener noreffer">Consul</a>, Terraform and <a href="https://www.packer.io" target="_blank" rel="noopener noreffer">Packer</a>
+and eventually configuration management tooling like <strong><a href="https://www.ansible.com" target="_blank" rel="noopener noreffer">Ansible</a></strong>
+and <strong><a href="https://www.saltstack.com" target="_blank" rel="noopener noreffer">Salt</a></strong>.</p>
+<p><strong>Terraform</strong> presented an excellent declarative approach to infrastructure
+management which many of the current technologies in the cloud native space have
+leveraged. So we decided, after careful evaluation, to retire our fab-based deploy library
+for Terraform. Besides technical pros and cons, one always have to consider
+human factors. Some teams are slower to adopt changes than other, be it because
+of lack of resources or because the cost of transitions are not uniform.
+For us, it took a long time, about one year, to migrate.</p>
+<p><strong><a href="https://www.terraform.io" target="_blank" rel="noopener noreffer">Terraform</a></strong> certainly brought us some out of the box features which we were
+missing from our old deploy project, including:</p>
+<ul>
+<li>Central state management of infrastructure.</li>
+<li>Verbose plan, patch and apply support.</li>
+<li>Easy teardown of resources with minimal orphaned resources.</li>
+<li>Support for multiple clouds.</li>
+</ul>
+<p>Meanwhile, we also faced some <strong>challenges</strong> in our journey with Terraform:</p>
+<ul>
+<li>Complex cloud specific DSL which is typically not DRY.</li>
+<li>Difficult to wrap it in other tools.</li>
+<li>Limited and sometimes complex templating support.</li>
+<li>No feedback on the health of services.</li>
+<li>No easy rollbacks.</li>
+<li>Missing crucial features implemented by third parties like terragrunt.</li>
+</ul>
+<p>Terraform certainly has its place at Cliqz and these days we still use it to
+deploy most of our Kubernetes infrastructure.</p>
+<h2 id="intricacies-of-a-search-system">Intricacies of a Search System</h2>
+<p><img
+        class="lazyload"
+        src="../svg/loading/small.min.svg"
+        data-src="../images/posts/architecture-of-large-scale-web-search-engine/fuse_overview.png"
+        data-srcset="../images/posts/architecture-of-large-scale-web-search-engine/fuse_overview.png, ../images/posts/architecture-of-large-scale-web-search-engine/fuse_overview.png 1.5x, ../images/posts/architecture-of-large-scale-web-search-engine/fuse_overview.png 2x"
+        data-sizes="auto"
+        alt="Figure 3: Search Overview"
+        title="Figure 3: Search Overview" /></p>
+<p>Over the years, we have moved from a distributed architecture, with dozens of
+servers, to a monolithic architecture, to finally end up on a microservices
+architecture.</p>
+<p>Each solution we believed in was the most convenient at that time, given the
+resources available; for instance, the monolith version was due to the fact that
+most of our latency came out of network IO among the machines of the cluster.
+At that time, AWS launched the X1 Instance, with a whopping 2 TB of RAM.
+A quick change of architecture allowed us to reduce latency quickly, but of course,
+costs went up. The next iteration on architecture we focused ourselves on cost.
+Step by step we tried to fix one variable without worsening the others.
+It might not look like a very fancy approach, but it worked well for us.</p>
+<blockquote>
+<p>The microservice architectural style is an approach to developing a single
+application as a suite of small services, each running in its own process and
+communicating with lightweight mechanisms, often an HTTP resource API.
+~Martin Fowler</p>
+</blockquote>
+<p>The microservice definition by Martin Fowler is technically correct, but is
+somewhat abstract. To us it generally does not give enough of a description on
+how to exactly build and proportion your microservices, which are important
+concerns. The move to microservices brought us:</p>
+<ul>
+<li>Better modularity and autonomy of teams and separation of concerns.</li>
+<li>Horizontal scalability and workload partitioning.</li>
+<li>Fault isolation and better support for multiple languages.</li>
+<li>Multi-tenancy and generally a better security footprint.</li>
+<li>Better automation in operations.</li>
+</ul>
+<p>Looking at a broad picture of the architecture and how we structure our
+microservices when a search query is issued to the backend, a number of services
+are triggered in the request path. Each service is considered a microservice in
+the sense it has separation of concern, is driven by a lightweight protocol
+(REST/ <a href="https://grpc.io" target="_blank" rel="noopener noreffer">GRPC</a>) and is horizontally scalable. Each service can be constituted of
+individual microservices and can have a persistence layer. The request path
+typically involves:</p>
+<ul>
+<li><strong>Web application firewall (WAF)</strong> - Application firewall against common web
+exploits.</li>
+<li><strong>Load Balancers</strong> - Request ingestion and load balancing.</li>
+<li><strong>Ingress proxies</strong> - Routing, edge observability, discovery, policy
+enforcement.</li>
+<li><strong>Eagle</strong> - Server side rendering for SERP.</li>
+<li><strong>Fuse</strong> - API Gateway, results mixer, edge caching, authentication /
+authorization.</li>
+<li><strong>Suggest</strong> - Query Suggestions<sup id="fnref:4"><a href="#fn:4" class="footnote-ref" role="doc-noteref">4</a></sup>.</li>
+<li><strong>Ranking</strong><sup id="fnref:5"><a href="#fn:5" class="footnote-ref" role="doc-noteref">5</a></sup> - Serves search results using a near real-time index and
+pre-compiled batch index (Lambda Architecture).</li>
+<li><strong>Rich Results</strong><sup id="fnref:6"><a href="#fn:6" class="footnote-ref" role="doc-noteref">6</a></sup> - Adds rich information like snippets for weather, live
+scores, other third party sources.</li>
+<li><strong>Knowledge Graph and Instant Answers</strong> - To the point information related to
+a query.</li>
+<li><strong>Places</strong> - Geo-Local based content recommendation.</li>
+<li><strong>News</strong> - Real-time Content from reputable news sources.</li>
+<li><strong>Tracker</strong> - Domain specific tracker Information via <a href="https://whotracks.me" target="_blank" rel="noopener noreffer">WhoTracks.me</a>.</li>
+<li><strong>Images</strong> - Image results relevant to user query.</li>
+</ul>
+<p>All these services are orchestrated through a common API gateway responsible for
+handling search volume as well equipped with features like providing protection
+around traffic surges, Auto-scaling based on requests / cpu / memory / custom
+metrics usage, edge caching, traffic shadowing and splitting,
+A/B Testing<sup id="fnref:7"><a href="#fn:7" class="footnote-ref" role="doc-noteref">7</a></sup>, Blue-Green<sup id="fnref:8"><a href="#fn:8" class="footnote-ref" role="doc-noteref">8</a></sup> deployments, Canary release<sup id="fnref:9"><a href="#fn:9" class="footnote-ref" role="doc-noteref">9</a></sup>,
+etc. The platform is also responsible for providing many of these
+functionalities to services in play.</p>
+<h2 id="docker-containers-and-container-orchestration-system">Docker Containers and Container Orchestration System</h2>
+<p>So far, we have described some of the requirements and specific details
+about our product offering. We described how we did deployments and
+what were the shortcomings with the solutions which we tried. Given these
+learnings, we chose Docker, as the fundamental building block for all of our services.
+We started delivering our code using docker containers, instead of using
+plain VMs with code and dependencies. With docker, code and its dependencies are
+shipped as docker images to a container registry (ECR).</p>
+<p>But once the services started growing again, there was a need to manage them, specially
+when we wanted to scale them in production. It became apparent over the years that we had to
+introduce a container orchestration system. The pain points that led to the introduction were
+typically <strong>wasted compute resources</strong> and <strong>complexities in infrastructure</strong> and
+<strong>configuration management.</strong></p>
+<p>We are always short on people and on computing power, this is a situation
+shared by most start-ups with limited resources. Of course, to be effective,
+we must focus on solving the problems that we have, that cannot be solved by
+tools that already exists. But, we do not believe in reinventing the wheel
+(until it radically changes the existing landscape).
+We are avid users of open source software, where we found solutions to
+our critical business problems.</p>
+<p>We started evaluating <a href="https://github.com/kubernetes/kubernetes" target="_blank" rel="noopener noreffer">Kubernetes</a><sup id="fnref:10"><a href="#fn:10" class="footnote-ref" role="doc-noteref">10</a></sup> (k8s)
+as soon as the 1.0 version was released
+and had production level workloads running by 1.4, once the project showed
+stability and maturity in tooling. During the same time, we evaluated other
+orchestration systems including Apache Mesos and Docker Swarm for our large scale
+projects like fetcher (web scale crawler). We eventually landed on running
+everything with Kubernetes, as it was quite evident that the project showed promise in
+having a cohesive approach to tackling orchestration and configuration
+management while others didn&rsquo;t, and also included a strong community support.</p>
+<h2 id="kubernetes---the-cliqz-stack">Kubernetes - The Cliqz Stack</h2>
+<p><img
+        class="lazyload"
+        src="../svg/loading/small.min.svg"
+        data-src="../images/posts/architecture-of-large-scale-web-search-engine/tech.jpg"
+        data-srcset="../images/posts/architecture-of-large-scale-web-search-engine/tech.jpg, ../images/posts/architecture-of-large-scale-web-search-engine/tech.jpg 1.5x, ../images/posts/architecture-of-large-scale-web-search-engine/tech.jpg 2x"
+        data-sizes="auto"
+        alt="Figure 4: OSS at Cliqz"
+        title="Figure 4: OSS at Cliqz" /></p>
+<blockquote>
+<p>Open Source has won!</p>
+</blockquote>
+<p>Cliqz relies heavily on a lot of Open Source Software (OSS) projects typically under the umbrella of
+Cloud Native Computing Foundation<sup id="fnref:11"><a href="#fn:11" class="footnote-ref" role="doc-noteref">11</a></sup> to provide a cohesive cloud native
+experience. We try our best to contribute back to the community both in terms of
+code, blog posts and on other channels including slack. We will share details about
+the usage of some critical OSS projects which form the core of our stack:</p>
+<h3 id="kops---kubernetes-orchestration">KOPS - Kubernetes Orchestration</h3>
+<p>For container orchestration, we self manage multi-region Kubernetes clusters
+using <a href="https://github.com/kubernetes/kops" target="_blank" rel="noopener noreffer">KOPS</a> and some homegrown tooling
+on top to manage cluster lifecycle and
+addon management. Shoutout to Justin Santa Barbara and kops maintainers for
+their awesome work, providing a well integrated experience on bringing
+up the k8s control plane and worker nodes in a conformant way. Currently we
+don&rsquo;t rely on a managed offering just because of the flexibility of KOPS and
+lack of maturity in EKS, an AWS managed k8s control plane.</p>
+<p>Using KOPS and self managing a cluster meant that we can really set at our own pace,
+dive deeper during troubleshooting, activate features which were application
+requirements but available only in specific Kubernetes releases. If we had waited for a
+cloud offering, we would had to wait a considerably longer time to reach at the
+stage that we have now.</p>
+<h3 id="weave-net---network-overlay">Weave Net - Network Overlay</h3>
+<p>Its important to note that Kubernetes helps to abstract all parts
+of the system. This not only includes compute and storage, but also networking.
+For our clusters which can grow to hundreds of nodes, we employ an <a href="https://en.wikipedia.org/wiki/Overlay_network" target="_blank" rel="noopener noreffer">overlay
+network</a> which forms the backbone
+for providing flat networking and network
+policy enforcement capabilities for pods spawning over multiple nodes,
+availability zones and regions. <a href="https://www.weave.works/oss/net/" target="_blank" rel="noopener noreffer">Weave Net</a> is the overlay of choice we landed on
+early because of easy manageability and route management through gossip. As we
+grow bigger we might shift to <a href="https://github.com/aws/amazon-vpc-cni-k8s" target="_blank" rel="noopener noreffer">AWS VPC CNI</a>
+and <a href="https://www.projectcalico.org" target="_blank" rel="noopener noreffer">Calico</a> as they mature to provide less network hops and more consistency
+in routing and traffic. Till now weave net has performed exemplary in our
+latency and throughput targets and there hasn&rsquo;t been a reason to switch.</p>
+<h3 id="helm--helmfile---package-management-and-delivery">Helm / Helmfile - Package management and delivery</h3>
+<p>We have relied on helm (v2) from the start for package and release management of
+Kubernetes manifests. Even though it has its pain points, we found it to be
+an excellent resource for release management and templating. We follow a single
+repository structure for helm charts of all of our services which are packaged
+and served using the chartmuseum project. Environment specific values are then
+kept in a separate repository to separate concerns. These are driven using the
+gitOps pattern through <a href="https://github.com/roboll/helmfile" target="_blank" rel="noopener noreffer">Helmfile</a>, which
+provides a declarative approach to multiple helm charts release management
+and associated essential plugins like diff, tillerless and secret management
+at rest with <a href="https://github.com/mozilla/sops" target="_blank" rel="noopener noreffer">SOPS</a>.
+Changes to this repository are validated and deployed using CI / CD pipelines
+driven through <a href="https://jenkins.io" target="_blank" rel="noopener noreffer">Jenkins</a>.</p>
+<h3 id="tilt--k9s---no-stress-local-kubernetes-development">Tilt / K9s - No stress local Kubernetes development</h3>
+<p>One of the problems we faced early on was: How best to include k8s into the inner loop
+of a developer development life-cycle. Some requirements are quickly apparent.
+How to build and sync code into containers and do it as fast as possible.
+Initially we had a simple homegrown solution to tap into filesystem events on
+source changes and just rsync everything to containers. We also experimented
+with projects including <a href="https://github.com/GoogleContainerTools/skaffold" target="_blank" rel="noopener noreffer">Skaffold</a> from Google
+and <a href="https://github.com/Azure/draft" target="_blank" rel="noopener noreffer">Draft</a> from Microsoft trying to
+solve the same problems. Eventually what worked for us is <a href="https://tilt.dev" target="_blank" rel="noopener noreffer">Tilt</a> from Windmill
+Engineering (shoutout to Daniel Bentley), who have an excellent product on their
+hands with a workflow driven by Tiltfile written using
+<a href="https://github.com/bazelbuild/starlark" target="_blank" rel="noopener noreffer">starlark</a> language. It
+is able to watch files for edits, can apply changes automatically, build
+container images in real-time, make build faster with in cluster builds and skip
+registries and has a nice UI to see all information about your services in a
+single pane, etc. And when you want to dig a bit deeper we open the nitty gritty
+of k8s through an awesome CLI tool called <a href="https://github.com/derailed/k9s" target="_blank" rel="noopener noreffer">K9s</a>
+to interactively run k9s commands
+and simplify developer workflows. Today all of our workloads running in k8s are
+developed in cluster with a cohesive and fast experience across projects thanks
+to helm / tilt / k9s and anyone new joining in can easily onboard with a few
+commands.</p>
+<h3 id="prometheus-alertmanager-jaeger-grafana-and-loki---observability">Prometheus, AlertManager, Jaeger, Grafana and Loki - Observability</h3>
+<p>We rely heavily on the <a href="https://prometheus.io" target="_blank" rel="noopener noreffer">Prometheus</a> monitoring solution and time series database
+(tsdb) to gather, aggregate and forward our metrics scrapped from individual
+services. Prometheus ships with an excellent querying language PromQl and
+alerting solution <a href="https://prometheus.io/docs/alerting/alertmanager/" target="_blank" rel="noopener noreffer">Alert Manager</a>.
+<a href="https://www.jaegertracing.io" target="_blank" rel="noopener noreffer">Jaeger</a> forms the backbone for our trace
+aggregation. Recently we started shifting from <a href="https://www.graylog.org" target="_blank" rel="noopener noreffer">Graylog</a>
+to <a href="https://grafana.com/oss/loki/" target="_blank" rel="noopener noreffer">Loki</a> as our logging
+backend to provide a similar experience as Prometheus. This all is done to
+provide a single pane of glass where all observability requirements can be met
+and we intend to deliver that with Grafana which is our charting solution. To
+orchestrate all these services we rely heavily on the <a href="https://github.com/coreos/prometheus-operator" target="_blank" rel="noopener noreffer">Prometheus Operator</a>
+project with integrations on top to manage the life-cycle of many multi-tenant
+Prometheus deployments that we have today. At any given time we ingest hundreds
+of thousands of time series to gather insights about running infrastructure and
+services to aid when something fails.</p>
+<p>In the future, we plan to either integrate
+<a href="https://github.com/thanos-io/thanos" target="_blank" rel="noopener noreffer">Thanos</a> or <a href="https://github.com/cortexproject/cortex" target="_blank" rel="noopener noreffer">Cortex</a> project to address Prometheus scalability challenges and provide a global query view, high availability and
+data backup for historical analysis.</p>
+<h3 id="luigi-and-jenkins---automating-data-pipelines">Luigi and Jenkins - Automating Data-pipelines</h3>
+<p>We use <a href="https://github.com/spotify/luigi" target="_blank" rel="noopener noreffer">Luigi</a> and <a href="https://jenkins.io" target="_blank" rel="noopener noreffer">Jenkins</a>
+to orchestrate and automate our data pipelines. The batch jobs
+are submitted via steps to EMR and Luigi helps us to build highly complex batch
+workflows on top of these jobs. Jenkins is utilized to trigger a series of operations
+in course of an ETL process providing us control over automation and use of resources,
+drilled down to individual task.</p>
+<p>We package and version our batch job code in versioned docker containers, to
+keep a consistent developer and production experience.</p>
+<h3 id="addon-projects">Addon Projects</h3>
+<p>We also include many other projects developed by the community, which are
+delivered as addons and maintained as part of the cluster life-cycle to provide
+value to the services deployed both in production and development environments.
+We discuss them briefly below:</p>
+<ul>
+<li><strong><a href="https://argoproj.github.io/" target="_blank" rel="noopener noreffer">Argo Workflow and CD</a></strong> - Evaluating as an alternative to Jenkins for batch processing task and continuous deployment efforts.</li>
+<li><strong><a href="https://github.com/kubernetes-sigs/aws-iam-authenticator" target="_blank" rel="noopener noreffer">AWS IAM Authenticator</a></strong> - User identity management in k8s.</li>
+<li><strong><a href="https://chartmuseum.com" target="_blank" rel="noopener noreffer">ChartMuseum</a></strong> - Serves our remote helm charts.</li>
+<li><strong><a href="https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler" target="_blank" rel="noopener noreffer">Cluster Autoscaler</a></strong> - Manages scaling of on-demand and spot fleets in our
+clusters.</li>
+<li><strong><a href="https://github.com/kubernetes/autoscaler/tree/master/vertical-pod-autoscaler" target="_blank" rel="noopener noreffer">Vertical Pod Autoscaler</a></strong> - Vertically scales pods where necessary or based on custom metrics.</li>
+<li><strong><a href="https://www.consul.io" target="_blank" rel="noopener noreffer">Consul</a></strong> - State store for many projects,
+where we can we try to move to <a href="https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/" target="_blank" rel="noopener noreffer">Custom Resource Definitions</a> (CRDs).</li>
+<li><strong><a href="https://github.com/kubernetes-sigs/external-dns" target="_blank" rel="noopener noreffer">External DNS</a></strong> - Maps DNS records to Route53 for external and internal
+access.</li>
+<li><strong><a href="https://github.com/hjacobs/kube-downscaler" target="_blank" rel="noopener noreffer">Kube Downscaler</a></strong> - Downscales deployments and statefulsets when they are no
+longer in use.</li>
+<li><strong><a href="https://github.com/jtblin/kube2iam" target="_blank" rel="noopener noreffer">Kube2IAM</a></strong> - Transparent proxy to restrict aws metadata access and role
+management for pods.</li>
+<li><strong><a href="https://grafana.com/oss/loki/" target="_blank" rel="noopener noreffer">Loki / Promtail</a></strong> - Log shipment and aggregation.</li>
+<li><strong><a href="https://github.com/kubernetes-sigs/metrics-server" target="_blank" rel="noopener noreffer">Metrics Server</a></strong> - Metrics aggregation and interfacing for other consumers.</li>
+<li><strong><a href="https://github.com/kubernetes/ingress-nginx" target="_blank" rel="noopener noreffer">Nginx Ingress</a></strong> - Ingress controller for internal and external services. We
+continue to evaluate other ingress controllers for extended API gateway
+functionalities including Gloo, Istio ingress gateway and Kong.</li>
+<li><strong><a href="https://github.com/coreos/prometheus-operator" target="_blank" rel="noopener noreffer">Prometheus Operator</a></strong> - Prometheus operator stack to provision Grafana,
+Prometheus, AlertManager and Jaeger Deployments.</li>
+<li><strong><a href="https://github.com/FairwindsOps/rbac-manager" target="_blank" rel="noopener noreffer">RBAC Manager</a></strong> - An operator to easily manage Role Based Access Control for k8s resources.</li>
+<li><strong><a href="https://github.com/helm/charts/tree/master/stable/k8s-spot-termination-handler" target="_blank" rel="noopener noreffer">Spot Termination Handler</a></strong> - Handles spot termination gracefully by preemptively cordoning and draining
+nodes.</li>
+<li><strong><a href="https://istio.io" target="_blank" rel="noopener noreffer">Istio</a></strong> - We continue to evaluate Istio for its mesh, observability, traffic
+routing and shaping capabilities. For many of these features, we have built
+solutions in house, which have shown limitations over time, which we intend to
+fulfill with this excellent project.</li>
+</ul>
+<p>Our experience with k8s coupled with excellent community tooling has enabled us
+to not only ship our core stateless services providing search, but also helped
+us run large and critical stateful workloads like Cassandra, Kafka, Memcached
+and RocksDB in multiple availability zones and clusters, for high availability
+and replication. We have developed additional tooling to manage and safely
+execute these workload for our scale within Kubernetes.</p>
+<h2 id="local-development-with-tilt---an-end-to-end-use-case">Local Development with Tilt - An end to end use case</h2>
+<p>So far we covered a lot of ground describing all the tools we use,
+but we would like to give a concrete example on how this tooling, well, parts of
+it, is affecting the typical day-to-day workflow of our developers.</p>
+<p>Let us take the example of an engineer working on Ranking. Previously, the workflow was:</p>
+<ol>
+<li>Start a spot instance with a custom OS image, tag instance and associated resources
+with ownership information.</li>
+<li>Rsync application code to the instance and install application dependencies.</li>
+<li>Figure out setting up other services like api-gateway and front-end, their dependencies and deployments.</li>
+<li>Configure them to work well with one another.</li>
+<li>Start working on the Ranking application.</li>
+<li>At the end, once done, make sure to <strong>terminate</strong> the instance.</li>
+</ol>
+<p>We can see that, one needs to follow a series of steps
+repeatedly, over and over again and every new engineer in the team will have
+to repeat it, which is a total waste of developer productivity. If the instance is lost we repeat.
+Also there is a stark difference between the production and local development
+workflow, leading to inconsistencies at some point of time. One might also
+argue the need for setting up other services like front-end along with ranking,
+but aim is to be generic here and in addition its always good to have complete visibility
+of the product. Additionally, as the team size grows, more cloud resources are created
+and more resources are under-utilized. Engineers let instances run, because
+they don&rsquo;t want to redo the setup process every day. If a team member leaves and has an orphan
+instance without sufficient tags, it is a challenge to identify whether or not
+it is safe to turn off the instance and delete said cloud resources.</p>
+<p>What would be ideal, is to provide an engineer with a base template to set up
+local environment with his own full version of SERP along with other
+services responsible for ranking. We configure the base template generically, which
+tags resources created by the user with thier unique identifier names and allows
+them to control the life-cycle of their application. As K8s already abstract out need
+to launch instances and managing them (we centrally administer them using KOPS),
+we use the template to set defaults (auto downscaling during non-work hours)
+and hence tremendously reduce costs.</p>
+<p>All the user now has to care about is the code written in his local editor
+and our tooling which is composed of a combination of Docker, Helm and Tilt on
+top of Kubernetes facilitates this said workflow, working behind the scenes like magic.</p>
+<p>Here is an example <a href="https://docs.tilt.dev/api.html" target="_blank" rel="noopener noreffer">Tiltfile</a>, which describes
+the services and other dependent services required to setup a mini-SERP version. For launching these services in
+development mode, all the user has to do is run: <code>tilt up</code></p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt"> 1
+</span><span class="lnt"> 2
+</span><span class="lnt"> 3
+</span><span class="lnt"> 4
+</span><span class="lnt"> 5
+</span><span class="lnt"> 6
+</span><span class="lnt"> 7
+</span><span class="lnt"> 8
+</span><span class="lnt"> 9
+</span><span class="lnt">10
+</span><span class="lnt">11
+</span><span class="lnt">12
+</span><span class="lnt">13
+</span><span class="lnt">14
+</span><span class="lnt">15
+</span><span class="lnt">16
+</span><span class="lnt">17
+</span><span class="lnt">18
+</span><span class="lnt">19
+</span><span class="lnt">20
+</span><span class="lnt">21
+</span><span class="lnt">22
+</span><span class="lnt">23
+</span><span class="lnt">24
+</span><span class="lnt">25
+</span><span class="lnt">26
+</span><span class="lnt">27
+</span><span class="lnt">28
+</span><span class="lnt">29
+</span><span class="lnt">30
+</span><span class="lnt">31
+</span><span class="lnt">32
+</span><span class="lnt">33
+</span><span class="lnt">34
+</span><span class="lnt">35
+</span><span class="lnt">36
+</span><span class="lnt">37
+</span><span class="lnt">38
+</span><span class="lnt">39
+</span><span class="lnt">40
+</span><span class="lnt">41
+</span><span class="lnt">42
+</span><span class="lnt">43
+</span><span class="lnt">44
+</span><span class="lnt">45
+</span><span class="lnt">46
+</span><span class="lnt">47
+</span><span class="lnt">48
+</span><span class="lnt">49
+</span><span class="lnt">50
+</span><span class="lnt">51
+</span><span class="lnt">52
+</span><span class="lnt">53
+</span><span class="lnt">54
+</span><span class="lnt">55
+</span><span class="lnt">56
+</span><span class="lnt">57
+</span><span class="lnt">58
+</span><span class="lnt">59
+</span><span class="lnt">60
+</span><span class="lnt">61
+</span><span class="lnt">62
+</span><span class="lnt">63
+</span><span class="lnt">64
+</span><span class="lnt">65
+</span><span class="lnt">66
+</span><span class="lnt">67
+</span><span class="lnt">68
+</span><span class="lnt">69
+</span><span class="lnt">70
+</span><span class="lnt">71
+</span><span class="lnt">72
+</span><span class="lnt">73
+</span><span class="lnt">74
+</span><span class="lnt">75
+</span><span class="lnt">76
+</span><span class="lnt">77
+</span><span class="lnt">78
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-python" data-lang="python"><span class="c1"># -*- mode: Python -*-</span>
+
+<span class="s2">&#34;&#34;&#34;
+</span><span class="s2">This Tiltfile manages 1 primary service which depends on a number of other micro services.
+</span><span class="s2">Also, it makes it easier to launch some extra ancilliary services which may be
+</span><span class="s2">useful during development.
+</span><span class="s2">Here&#39;s a quick rundown of these services and their properties:
+</span><span class="s2">* ranking: Handles ranking
+</span><span class="s2">* api-gateway: API Gateway for frontend
+</span><span class="s2">* frontend: Server Side Rendering for SERP
+</span><span class="s2">&#34;&#34;&#34;</span>
+
+<span class="c1">####################</span>
+<span class="c1"># Project defaults #</span>
+<span class="c1">####################</span>
+
+<span class="n">project</span> <span class="o">=</span> <span class="s2">&#34;some-project&#34;</span>
+<span class="n">namespace</span> <span class="o">=</span> <span class="s2">&#34;some-namespace&#34;</span>
+<span class="n">chart_name</span> <span class="o">=</span> <span class="s2">&#34;some-project-chart&#34;</span>
+<span class="n">deploy_path</span> <span class="o">=</span> <span class="s2">&#34;../../deploy&#34;</span>
+<span class="n">charts_path</span> <span class="o">=</span> <span class="s2">&#34;{}/charts&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">deploy_path</span><span class="p">)</span>
+<span class="n">chart_path</span> <span class="o">=</span> <span class="s2">&#34;{}/{}&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">charts_path</span><span class="p">,</span> <span class="n">chart_name</span><span class="p">)</span>
+<span class="n">values_path</span> <span class="o">=</span> <span class="s2">&#34;{}/some-project/services/development.yaml&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">deploy_path</span><span class="p">)</span>
+<span class="n">secrets_path</span> <span class="o">=</span> <span class="s2">&#34;{}/some-project/services/secrets.yaml&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">deploy_path</span><span class="p">)</span>
+<span class="n">secrets_dec_path</span> <span class="o">=</span> <span class="s2">&#34;{}/some-project/services/secrets.yaml.dec&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">deploy_path</span><span class="p">)</span>
+<span class="n">chart_version</span> <span class="o">=</span> <span class="s2">&#34;X.X.X&#34;</span>
+
+<span class="c1"># Load tiltfile library</span>
+<span class="n">load</span><span class="p">(</span><span class="s2">&#34;../../libs/tilt/Tiltfile&#34;</span><span class="p">,</span> <span class="s2">&#34;validate_environment&#34;</span><span class="p">)</span>
+<span class="n">env</span> <span class="o">=</span> <span class="n">validate_environment</span><span class="p">(</span><span class="n">project</span><span class="p">,</span> <span class="n">namespace</span><span class="p">)</span>
+
+<span class="c1"># Docker repository path for components</span>
+<span class="n">serving_image</span> <span class="o">=</span> <span class="n">env</span><span class="p">[</span><span class="s2">&#34;docker_registry&#34;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&#34;/some-repo/services/some-project/serving&#34;</span>
+
+<span class="c1">####################################</span>
+<span class="c1"># Build services and deploy to k8s #</span>
+<span class="c1">####################################</span>
+
+<span class="c1"># Watch development values file for helm chart to re-execute Tiltfile in case of changes</span>
+<span class="n">watch_file</span><span class="p">(</span><span class="n">values_path</span><span class="p">)</span>
+
+<span class="c1"># Build docker images</span>
+<span class="c1"># Uncomment the live_update part if you wish to use the live_update function</span>
+<span class="c1"># i.e., no container restarts while developing. Ex: Using Python debugging</span>
+<span class="n">docker_build</span><span class="p">(</span><span class="n">serving_image</span><span class="p">,</span> <span class="s2">&#34;serving&#34;</span><span class="p">,</span> <span class="n">dockerfile</span><span class="o">=</span><span class="s2">&#34;./serving/Dockerfile&#34;</span><span class="p">,</span> <span class="n">build_args</span><span class="o">=</span><span class="p">{</span><span class="s2">&#34;PIP_INDEX_URL&#34;</span><span class="p">:</span> <span class="n">env</span><span class="p">[</span><span class="s2">&#34;pip_index_url&#34;</span><span class="p">],</span> <span class="s2">&#34;AWS_REGION&#34;</span><span class="p">:</span> <span class="n">env</span><span class="p">[</span><span class="s2">&#34;region&#34;</span><span class="p">]}</span> <span class="c1">#, live_update=[sync(&#39;serving/src/&#39;, &#39;/some-project/&#39;),]</span>
+<span class="p">)</span>
+
+<span class="c1"># Update local helm repos list</span>
+<span class="n">local</span><span class="p">(</span><span class="s2">&#34;helm repo update&#34;</span><span class="p">)</span>
+
+<span class="c1"># Remove old download chart in case of changes</span>
+<span class="n">local</span><span class="p">(</span><span class="s2">&#34;rm -rf {}&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">chart_path</span><span class="p">))</span>
+
+<span class="c1"># Decrypt secrets</span>
+<span class="n">local</span><span class="p">(</span><span class="s2">&#34;export HELM_TILLER_SILENT=true &amp;&amp; helm tiller run {} -- helm secrets dec {}&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">namespace</span><span class="p">,</span> <span class="n">secrets_path</span><span class="p">))</span>
+
+<span class="c1"># Convert helm chart to standard k8s manifests</span>
+<span class="n">template_script</span> <span class="o">=</span> <span class="s2">&#34;helm fetch {}/{} --version {} --untar --untardir {} &amp;&amp; helm template {} --namespace {} --name {} -f {} -f {}&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">env</span><span class="p">[</span><span class="s2">&#34;chart_repo&#34;</span><span class="p">],</span> <span class="n">chart_name</span><span class="p">,</span> <span class="n">chart_version</span><span class="p">,</span> <span class="n">charts_path</span><span class="p">,</span> <span class="n">chart_path</span><span class="p">,</span> <span class="n">namespace</span><span class="p">,</span> <span class="n">env</span><span class="p">[</span><span class="s2">&#34;release_name&#34;</span><span class="p">],</span> <span class="n">values_path</span><span class="p">,</span> <span class="n">secrets_dec_path</span><span class="p">)</span>
+<span class="n">yaml_blob</span> <span class="o">=</span> <span class="n">local</span><span class="p">(</span><span class="n">template_script</span><span class="p">)</span>
+
+<span class="c1"># Clean secrets file</span>
+<span class="n">local</span><span class="p">(</span><span class="s2">&#34;rm {}&#34;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">secrets_dec_path</span><span class="p">))</span>
+
+<span class="c1"># Deploy k8s manifests</span>
+<span class="n">k8s_yaml</span><span class="p">(</span><span class="n">yaml_blob</span><span class="p">)</span>
+
+<span class="n">dev_config</span> <span class="o">=</span> <span class="n">read_yaml</span><span class="p">(</span><span class="n">values_path</span><span class="p">)</span>
+
+<span class="c1"># Port-forward specific resources</span>
+<span class="n">k8s_resource</span><span class="p">(</span><span class="s1">&#39;{}-{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">env</span><span class="p">[</span><span class="s2">&#34;release_name&#34;</span><span class="p">],</span> <span class="s1">&#39;ranking&#39;</span><span class="p">),</span> <span class="n">port_forwards</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;XXXX:XXXX&#39;</span><span class="p">],</span> <span class="n">new_name</span><span class="o">=</span><span class="s2">&#34;short-name-1&#34;</span><span class="p">)</span>
+<span class="n">k8s_resource</span><span class="p">(</span><span class="s1">&#39;{}-{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">env</span><span class="p">[</span><span class="s2">&#34;release_name&#34;</span><span class="p">],</span> <span class="s1">&#39;some-project-2&#39;</span><span class="p">),</span> <span class="n">new_name</span><span class="o">=</span><span class="s2">&#34;short-name-2&#34;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">dev_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;api-gateway&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;enabled&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
+  <span class="n">k8s_resource</span><span class="p">(</span><span class="s1">&#39;{}-{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">env</span><span class="p">[</span><span class="s2">&#34;release_name&#34;</span><span class="p">],</span> <span class="s1">&#39;some-project-3&#39;</span><span class="p">),</span> <span class="n">port_forwards</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;XXXX:XXXX&#39;</span><span class="p">],</span> <span class="n">new_name</span><span class="o">=</span><span class="s2">&#34;short-name-3&#34;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="n">dev_config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;frontend&#39;</span><span class="p">,</span> <span class="p">{})</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;enabled&#39;</span><span class="p">,</span> <span class="bp">False</span><span class="p">):</span>
+  <span class="n">k8s_resource</span><span class="p">(</span><span class="s1">&#39;{}-{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">env</span><span class="p">[</span><span class="s2">&#34;release_name&#34;</span><span class="p">],</span> <span class="s1">&#39;some-project-4-1&#39;</span><span class="p">),</span> <span class="n">port_forwards</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;XXXX:XXXX&#39;</span><span class="p">],</span> <span class="n">new_name</span><span class="o">=</span><span class="s2">&#34;short-name-4-1&#34;</span><span class="p">)</span>
+  <span class="n">k8s_resource</span><span class="p">(</span><span class="s1">&#39;{}-{}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">env</span><span class="p">[</span><span class="s2">&#34;release_name&#34;</span><span class="p">],</span> <span class="s1">&#39;some-project-4-2&#39;</span><span class="p">),</span> <span class="n">new_name</span><span class="o">=</span><span class="s2">&#34;short-name-4-2&#34;</span><span class="p">)</span>
+</code></pre></td></tr></table>
+</div>
+</div><p>Notes:</p>
+<ol>
+<li>
+<p>Helm charts are primarily responsible for the application packaging and managing
+their release lifecyle. We use helm templating and the use of customizable yamls for providing values
+to these templates. This allows us to configure releases to their very core. This includes
+allocating resources to containers, allowing an easy way to configure which services
+they connect to, the ports on which they can run, etc.</p>
+</li>
+<li>
+<p>Tilt is used to setup the local k8s development environment with the provided helm charts and mapping
+local code to the services described in the charts. It provides functionality where we can continuously
+build docker container and deploy application to k8s or perform a local update (rsync local
+changes into a running container). One can also port forward the application to his
+local instance to access the service end-point while developing. In our case, we
+deploy using the k8s manifest by extracting the rendered template from the helm chart.
+This was due to our complex chart requirements where we are unable to fully utilize
+the helm functions provided with Tilt.</p>
+</li>
+<li>
+<p>If the application endpoint needs to be shared with other team members, the charts provide a uniform
+mechanism to create internal ingress endpoints.</p>
+</li>
+<li>
+<p>Our charts are served via the common helm charts repository, thus in production
+and development, we are using the same base code (versioned docker images), same
+chart template, but different values files for templating them according to our
+needs (deployment names, endpoint names, resources, replication, etc.)</p>
+</li>
+<li>
+<p>We keep this practice consistent across each and every project providing
+a much easier onboarding experience and improved manageability and control over
+cloud resources.</p>
+</li>
+</ol>
+<blockquote>
+<p>Any sufficiently advanced technology is indistinguishable from magic. ~ Arthur C. Clarke.</p>
+</blockquote>
+<p>One caveat though, Magic, however, has its short-comings. It increases productivity,
+reliability and reduces costs by means of more efficient resource sharing.
+But, when something break, people are blind to what they issue must be and
+tracking down the problem become a difficult task, specially because things
+always tend to fail at the most inconvenient moment. So, as much as we are
+proud of our work, we stay humble knowing this fact.</p>
+<h2 id="optimizing-costs">Optimizing Costs</h2>
+<p>Having a cheap infrastructure and a web scale search-engine do not go hand in
+hand, that said, there are ways by which you can save money. Let&rsquo;s discuss how
+we optimized for costs using our K8s based infrastructure:</p>
+<p>1 . <strong>Spot Instances</strong></p>
+<ul>
+<li>We heavily relied on <a href="https://aws.amazon.com/ec2/spot/" target="_blank" rel="noopener noreffer">AWS spot instances</a>,
+as using them forced us to build the system for failures. But it was worth it,
+as they are a lot cheaper as compared to <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-on-demand-instances.html" target="_blank" rel="noopener noreffer">on-demand instances</a>.
+Be wary though of not falling on the same self-inflicted damage we did. We
+were so used to those, that sometimes we outbid ourselves, happened more often
+than what we would have liked. Also, Don&rsquo;t exhaust high performance machines
+or you will get in a bidding war with other companies.  Lastly, Never use spot
+GPU instances before a major NLP/ML conference.</li>
+<li>Mixed Instance Pools with Spot: Not only did we utilize spot instances for
+one-off jobs, but for service workloads. We came up with a neat strategy,
+where we create a node pool for running kubernetes resources using <a href="https://github.com/kubernetes/kops/blob/master/docs/instance_groups.md#creating-a-instance-group-of-mixed-instances-types-aws-only" target="_blank" rel="noopener noreffer">mixed instance
+types</a>
+(but, similar configurations) which were distributed across multiple
+Availability Zones. This coupled with <a href="https://github.com/helm/charts/tree/master/stable/k8s-spot-termination-handler" target="_blank" rel="noopener noreffer">Spot Termination
+Handler</a>
+allowed us to move our stateless workloads just in time to newly created or
+spare capacity spot nodes thus saving us from a potentially high downtime.</li>
+</ul>
+<p>2 . <strong>Sharing CPU and Memory</strong></p>
+<p>As we are fully committed  on Kubernetes, we discuss workload provisioning based
+on how much CPU or memory is necessary and how many replicas does one service
+need. In this, if the <a href="https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/" target="_blank" rel="noopener noreffer">Request and
+Limits</a>
+are equal we get guaranteed performance. Although, if the Request is low but
+Limit is high, which may be useful in case of sporadic workloads, we could
+over-provision and maximally utilize the resources on an instance (reduce idle
+resources on an instance).</p>
+<p>3 . <strong>Cluster Auto-scaler, Vertical and Horizontal Pod Autoscaler</strong></p>
+<p>We deploy these to automate launching and downscaling of
+<a href="https://kubernetes.io/docs/concepts/workloads/pods/pod/" target="_blank" rel="noopener noreffer">pods</a> and in turn
+instances only when the need arises. This means when there is no workload, only
+the minimum set of instances are up and we don&rsquo;t need manual intervention to
+facilitate this.</p>
+<p>4 . <strong>Deployment downscalers in development environment</strong></p>
+<p>We use deployment <a href="https://github.com/hjacobs/kube-downscaler" target="_blank" rel="noopener noreffer">down-scalers</a> to
+downscale pod replicas to 0 at specific times for all services
+in development setting. Using an <a href="https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/" target="_blank" rel="noopener noreffer">annotation</a>
+in our application&rsquo;s kubernetes manifest, we can specify an uptime schedule:</p>
+<div class="highlight"><div class="chroma">
+<table class="lntable"><tr><td class="lntd">
+<pre class="chroma"><code><span class="lnt">1
+</span><span class="lnt">2
+</span></code></pre></td>
+<td class="lntd">
+<pre class="chroma"><code class="language-yaml" data-lang="yaml"><span class="k">annotations</span><span class="p">:</span><span class="w">
+</span><span class="w">    </span><span class="k">downscaler/uptime</span><span class="p">:</span><span class="w"> </span>Mon-Fri<span class="w"> </span><span class="m">08</span><span class="p">:</span><span class="m">00-19</span><span class="p">:</span><span class="m">30</span><span class="w"> </span>Europe/Berlin<span class="w">
+</span></code></pre></td></tr></table>
+</div>
+</div><p>This means the deployment is downscaled to zero during non-working hours. And in
+turn the instances are automatically downscaled by the cluster autoscaler since
+there are no active workloads on the instance.</p>
+<p>5 . <strong>Cost Assessment and instance recommendations &ndash; Long term cost reduction</strong></p>
+<p>In production, once we identify our resource utilization, we can select the
+instances which will be used heavily. Instead of on-demand, we could go towards
+a <a href="https://aws.amazon.com/ec2/pricing/reserved-instances/" target="_blank" rel="noopener noreffer">reserved instance</a>
+pricing model which requires a minimum of 1 year upfront payment. In turn, the
+costs are significantly cheaper as compared to running instances on-demand.</p>
+<p>For kubernetes, there are some solutions like <a href="https://kubecost.com" target="_blank" rel="noopener noreffer">kubecost</a>,
+which monitors usage over time and based on that recommend additional ways to
+save costs. It also provides an estimated price for a workload,
+so one can get a decent idea of the overall cost for deploying a system.
+One is notified also of the resources which might not be of use anymore like
+ebs volumes, etc in one single interface.</p>
+<p>All of these steps result in saving tens and thousands of euros for us annually.
+For larger organizations with high infrastructure bills, if executed properly,
+these strategies could easily save millions on average per year.</p>
+<h2 id="machine-learning-systems">Machine Learning Systems</h2>
+<p><img
+        class="lazyload"
+        src="../svg/loading/small.min.svg"
+        data-src="../images/posts/architecture-of-large-scale-web-search-engine/ml_debt.png"
+        data-srcset="../images/posts/architecture-of-large-scale-web-search-engine/ml_debt.png, ../images/posts/architecture-of-large-scale-web-search-engine/ml_debt.png 1.5x, ../images/posts/architecture-of-large-scale-web-search-engine/ml_debt.png 2x"
+        data-sizes="auto"
+        alt="Figure 5: Hidden Technical Debt in Machine Learning Systems — Sculley etal.&lt;sup id=&#34;fnref:12&#34;&gt;&lt;a href=&#34;#fn:12&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;12&lt;/a&gt;&lt;/sup&gt;"
+        title="Figure 5: Hidden Technical Debt in Machine Learning Systems — Sculley etal.&lt;sup id=&#34;fnref:12&#34;&gt;&lt;a href=&#34;#fn:12&#34; class=&#34;footnote-ref&#34; role=&#34;doc-noteref&#34;&gt;12&lt;/a&gt;&lt;/sup&gt;" /></p>
+<p>It is interesting to note that our Kubernetes journey started in the most
+unexpected manner. We were exploring the idea to set up an
+infrastructure, which allows us to run distributed deep learning
+experiments using Tensorflow. At the time this idea was new and although
+Tensorflow had shipped distributed training a short while ago, apart from a few
+handful of very well resourced organizations, only few knew how to run and
+manage this workload End-to-End specially for large settings. It was also a time
+when there was no cloud offering which could help solve this problem.</p>
+<p>We started out using a distributed setup deployed using Terraform, but we soon
+realized this solution has its limitations if we wish to scale it to all engineers of the organization.
+At the same time we found some community contributions, where plain Kubernetes
+manifests were generated via the use of smart jinja templating engine to create
+a distributed deployment of Deep Learning Training Application (Parameter Server &amp; Worker Mode)
+This was our first contact with Kubernetes. In parallel, we
+started working on building our search to work near real-time, along-side
+experimenting with recency ranking. It was then, when kubernetes shone the
+brightest for us and we decided to get stuck in and dive deeper into it.</p>
+<p>As part of our Machine Learning Systems journey, like with most of the
+infrastructure described above, our goal was to open it to the entire
+organization and make it easier for all developers to deploy applications on
+Kubernetes. We really wanted them to focus more on solving the problems instead
+of trying to solve infrastructure challenges associated with services.</p>
+<p>But, from all the gains one gets from applying Machine Learning to their
+problems we quickly realize that maintaining machine learning systems is a real
+pain. It goes a lot deeper than just writing ML code or training models. Even for an
+organization at our scale, we need to address some of these issues.
+They are described in depth in the paper, &ldquo;Hidden Technical Debt in Machine
+Learning Systems&rdquo;<sup id="fnref:12"><a href="#fn:12" class="footnote-ref" role="doc-noteref">12</a></sup>. It is a good read for anyone thinking of relying
+and running machine learning systems at scale in production.  In our process,
+we looked at several solutions,e.g.:</p>
+<ul>
+<li>MLT<sup id="fnref:13"><a href="#fn:13" class="footnote-ref" role="doc-noteref">13</a></sup></li>
+<li>AWS SageMaker<sup id="fnref:14"><a href="#fn:14" class="footnote-ref" role="doc-noteref">14</a></sup></li>
+<li>Kubeflow<sup id="fnref:15"><a href="#fn:15" class="footnote-ref" role="doc-noteref">15</a></sup></li>
+<li>MLFlow<sup id="fnref:16"><a href="#fn:16" class="footnote-ref" role="doc-noteref">16</a></sup></li>
+</ul>
+<p>Among all these, we found <strong>Kubeflow</strong> the most relevant, feature complete,
+cost effective and customizable for our needs.</p>
+<p>We have also penned down some of these reasons<sup id="fnref:17"><a href="#fn:17" class="footnote-ref" role="doc-noteref">17</a></sup> on  the official
+<a href="https://medium.com/kubeflow/" target="_blank" rel="noopener noreffer">Kubeflow Blog</a> a while back. Apart from providing
+us with custom resources like TfJob and PytorchJob to run our training code,
+one of the benefits of kubeflow has been its out of the box excellent
+<a href="https://jupyter.org" target="_blank" rel="noopener noreffer">notebook</a> support.</p>
+<h3 id="kubeflow-use-case">Kubeflow use-case</h3>
+<p>Many of the features responsible for our
+near-realtime search ranking utilized notebooks from Kubeflow. An engineer can spin
+up a notebook in the cluster and directly tap into our data
+infrastructure (batch and realtime streaming).  It made it
+easier to share notebooks and work on different parts of the code together.
+Experimentation became easier for engineers as they don&rsquo;t have to re-setup notebook servers,
+provide perimissions to access data infrastructure and look into the gory
+details of deployment, using a simple web interface one can choose what resources
+they needed for the notebook (cpu, memory and even gpu), allocate an ebs
+volume and start up a notebook server. Interestingly, some of the experiments,
+were done on notebooks with as low as 0.5 CPU and 1 GB of RAM.
+Usually this capacity was readily available in our cluster and we could easily
+facilitate spawning of such notebooks without starting newer instances.
+In a different setting, if two engineers from different teams were working,
+they most likely will start their own instances.
+This leads to increased costs and under-utilization of resources.</p>
+<p>In addition, Jobs can be submitted which can then be used to train, validate and serve the model
+from within the notebook. An interesting project in this regard is
+<a href="https://github.com/kubeflow/fairing" target="_blank" rel="noopener noreffer">Fairing</a>.</p>
+<p>Kubeflow itself is a very comprehensive initiative and we have only started
+scratching its surface. More recently, we have also started looking into
+projects like <a href="https://github.com/kubeflow/katib" target="_blank" rel="noopener noreffer">Katib</a> (hyperparameter tuning for machine learning models),
+<a href="https://github.com/kubeflow/kfserving" target="_blank" rel="noopener noreffer">KFServing</a> (Serverless inferencing of Machine Learning models on Kubernetes),
+<a href="https://github.com/kubeflow/pipelines" target="_blank" rel="noopener noreffer">Kubeflow Pipelines</a> (End to End Machine Learning Pipelines for Kubeflow) and <a href="https://www.tensorflow.org/tfx" target="_blank" rel="noopener noreffer">TFX</a> (Create and manage a production ML pipeline). We already
+have some prototype around these projects and hope to release them to
+production in near future.</p>
+<p>Given all these benefits, we would like to thank whole-heartedly the team behind Kubeflow
+for this amazing project.</p>
+<p>&hellip;</p>
+<p>As we grow and rely more on machine learning and its variants, we want the
+processes surrounding Machine Learning to be streamlined and be more reproducible in general. This is where things
+like model tracking, model management, data versioning and lineage becomes
+crucial.</p>
+<p>To run things consistently at our scale where we apply periodic updates
+and assessments, we needed a solution around data management for serving models in production,
+which facilitates hot swapping of models and indexes in our live production services autonomously.
+To tackle this issue, we built a solution in-house &ldquo;Hydra&rdquo; which provides
+downstream services with the capability of performing a dataset pub-sub. It also ensures
+volume management for services in a Kubernetes cluster.
+We will describe this in detail in a future post.</p>
+<h2 id="final-words">Final Words</h2>
+<blockquote>
+<p>Once you&rsquo;ve found success, your next goal should be helping others do the
+same. ~ Kelsey Hightower</p>
+</blockquote>
+<p>Architecting Cliqz has been challenging and fun at the same time. We believe
+there is still a long road ahead of us. As with growing development in this
+space, there are several possibilities and routes to take.</p>
+<p>Even though Cliqz employs 120+ people, the codebase is effectively developed by
+thousands of passionate open source developers, distributed globally, devoted to
+ship high quality code, and build safe and secure software systems for mankind. We
+would not have reached where we are without them. We would like to thank the
+open source community from the core of our hearts to be really generous and
+helpful in providing us with solutions, whenever we were stuck. Through this post, we
+wished to share our struggles, experiences and solutions for others who might have
+similar problems and are looking for answers. In the spirit of openness, we too
+are contributing back to the extent of our scarce resources <a href="https://github.com/cliqz-oss/" target="_blank" rel="noopener noreffer">here</a>.</p>
+<p>A fully private search offering from Cliqz is our contribution towards a privacy
+focused web, a daunting but not an impossible task. We invite you to try out
+our <a href="https://cliqz.com/#channel=blog" target="_blank" rel="noopener noreffer">search</a> and download our browsers on <a href="https://cliqz.com/en/desktop" target="_blank" rel="noopener noreffer">desktop</a> and <a href="https://cliqz.com/en/mobile" target="_blank" rel="noopener noreffer">mobile</a> to
+be part of this mission. And, if you enjoy working on such problems
+<a href="https://cliqz.com/en/about/careers" target="_blank" rel="noopener noreffer">come and join us</a>.</p>
+<p><em>Auf Wiedersehen (until we see each other again)</em></p>
+<h2 id="remarks-and-references">Remarks and references</h2>
+<section class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1" role="doc-endnote">
+<p><a href="https://0x65.dev/blog/2019-12-11/the-pivot-that-excited-mozilla-and-google.html" target="_blank" rel="noopener noreffer">https://0x65.dev/blog/2019-12-11/the-pivot-that-excited-mozilla-and-google.html</a> <a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:2" role="doc-endnote">
+<p><a href="https://0x65.dev/blog/2019-12-07/indexing-billions-of-text-vectors.html" target="_blank" rel="noopener noreffer">https://0x65.dev/blog/2019-12-07/indexing-billions-of-text-vectors.html</a> <a href="#fnref:2" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:3" role="doc-endnote">
+<p><a href="https://aws.amazon.com" target="_blank" rel="noopener noreffer">https://aws.amazon.com</a> <a href="#fnref:3" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:4" role="doc-endnote">
+<p><a href="https://0x65.dev/blog/2019-12-08/how-do-you-spell-boscodictiasaur.html" target="_blank" rel="noopener noreffer">https://0x65.dev/blog/2019-12-08/how-do-you-spell-boscodictiasaur.html</a> <a href="#fnref:4" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:5" role="doc-endnote">
+<p><a href="https://0x65.dev/blog/2019-12-06/building-a-search-engine-from-scratch.html" target="_blank" rel="noopener noreffer">https://0x65.dev/blog/2019-12-06/building-a-search-engine-from-scratch.html</a> <a href="#fnref:5" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:6" role="doc-endnote">
+<p><a href="https://0x65.dev/blog/2019-12-09/cliqz-rich-results.html" target="_blank" rel="noopener noreffer">https://0x65.dev/blog/2019-12-09/cliqz-rich-results.html</a> <a href="#fnref:6" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:7" role="doc-endnote">
+<p><a href="https://en.wikipedia.org/wiki/A/B_testing" target="_blank" rel="noopener noreffer">https://en.wikipedia.org/wiki/A/B_testing</a> <a href="#fnref:7" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:8" role="doc-endnote">
+<p><a href="https://martinfowler.com/bliki/BlueGreenDeployment.html" target="_blank" rel="noopener noreffer">https://martinfowler.com/bliki/BlueGreenDeployment.html</a> <a href="#fnref:8" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:9" role="doc-endnote">
+<p><a href="https://martinfowler.com/bliki/CanaryRelease.html" target="_blank" rel="noopener noreffer">https://martinfowler.com/bliki/CanaryRelease.html</a> <a href="#fnref:9" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:10" role="doc-endnote">
+<p><a href="https://kubernetes.io" target="_blank" rel="noopener noreffer">https://kubernetes.io</a> <a href="#fnref:10" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:11" role="doc-endnote">
+<p><a href="https://www.cncf.io/" target="_blank" rel="noopener noreffer">https://www.cncf.io/</a> <a href="#fnref:11" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:12" role="doc-endnote">
+<p><a href="https://papers.nips.cc/paper/5656-hidden-technical-debt-in-machine-learning-systems.pdf" target="_blank" rel="noopener noreffer">https://papers.nips.cc/paper/5656-hidden-technical-debt-in-machine-learning-systems.pdf</a> <a href="#fnref:12" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:13" role="doc-endnote">
+<p><a href="https://www.intel.ai/mlt-the-keras-of-kubernetes/" target="_blank" rel="noopener noreffer">https://www.intel.ai/mlt-the-keras-of-kubernetes/</a> <a href="#fnref:13" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:14" role="doc-endnote">
+<p><a href="https://aws.amazon.com/sagemaker" target="_blank" rel="noopener noreffer">https://aws.amazon.com/sagemaker</a> <a href="#fnref:14" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:15" role="doc-endnote">
+<p><a href="https://www.kubeflow.org" target="_blank" rel="noopener noreffer">https://www.kubeflow.org</a> <a href="#fnref:15" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:16" role="doc-endnote">
+<p><a href="https://mlflow.org" target="_blank" rel="noopener noreffer">https://mlflow.org</a> <a href="#fnref:16" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+<li id="fn:17" role="doc-endnote">
+<p><a href="https://medium.com/kubeflow/why-kubeflow-in-your-infrastructure-56b8fabf1f3e" target="_blank" rel="noopener noreffer">https://medium.com/kubeflow/why-kubeflow-in-your-infrastructure-56b8fabf1f3e</a> <a href="#fnref:17" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</section>
+</div><div class="post-footer" id="post-footer">
+    <div class="post-info">
+        <div class="post-info-line">
+            <div class="post-info-mod">
+                <span>Updated on 2020-05-27&nbsp;<a class="git-hash" href="https://github.com/faheem-nadeem/commit/e888ddc028623fc183ea7b93d75700f29585549c" target="_blank" title="commit by Faheem Nadeem(faheem@cliqz.com) e888ddc028623fc183ea7b93d75700f29585549c: Initial commit">
+                                    <i class="fas fa-hashtag fa-fw"></i>e888ddc</a></span>
+            </div>
+            <div class="post-info-license"></div>
+        </div>
+        <div class="post-info-line">
+            <div class="post-info-md"><span>
+                            <a class="link-to-markdown" href="../architecture-of-large-scale-web-search-engine/index.md" target="_blank">Read Markdown</a>
+                        </span></div>
+            <div class="post-info-share">
+                <span><a href="javascript:void(0);" title="Share on Twitter" data-sharer="twitter" data-url="https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/" data-title="The Architecture of a Large-Scale Web Search Engine" data-via="faheemnadeem" data-hashtags="realtime,kubernetes,machine learning,cloud native,oss"><i class="fab fa-twitter fa-fw"></i></a><a href="javascript:void(0);" title="Share on Facebook" data-sharer="facebook" data-url="https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/" data-hashtag="realtime"><i class="fab fa-facebook-square fa-fw"></i></a><a href="javascript:void(0);" title="Share on WhatsApp" data-sharer="whatsapp" data-url="https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/" data-title="The Architecture of a Large-Scale Web Search Engine" data-web><i class="fab fa-whatsapp fa-fw"></i></a><a href="javascript:void(0);" title="Share on Line" data-sharer="line" data-url="https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/" data-title="The Architecture of a Large-Scale Web Search Engine"><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.12.0/icons/line.svg"></i></a><a href="javascript:void(0);" title="Share on 微博" data-sharer="weibo" data-url="https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/" data-title="The Architecture of a Large-Scale Web Search Engine" data-image="/images/posts/architecture-of-large-scale-web-search-engine/serp.gif"><i class="fab fa-weibo fa-fw"></i></a><a href="javascript:void(0);" title="Share on Myspace" data-sharer="myspace" data-url="https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/" data-title="The Architecture of a Large-Scale Web Search Engine" data-description=""><i data-svg-src="https://cdn.jsdelivr.net/npm/simple-icons@2.12.0/icons/myspace.svg"></i></a><a href="javascript:void(0);" title="Share on Blogger" data-sharer="blogger" data-url="https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/" data-title="The Architecture of a Large-Scale Web Search Engine" data-description=""><i class="fab fa-blogger fa-fw"></i></a><a href="javascript:void(0);" title="Share on Evernote" data-sharer="evernote" data-url="https://faheem-nadeem.github.io/architecture-of-large-scale-web-search-engine/" data-title="The Architecture of a Large-Scale Web Search Engine"><i class="fab fa-evernote fa-fw"></i></a></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="post-info-more">
+        <section class="post-tags"><i class="fas fa-tags fa-fw"></i>&nbsp;<a href="../tags/realtime/">realtime</a>,&nbsp;<a href="../tags/kubernetes/">kubernetes</a>,&nbsp;<a href="../tags/machine-learning/">machine learning</a>,&nbsp;<a href="../tags/cloud-native/">cloud native</a>,&nbsp;<a href="../tags/oss/">oss</a></section>
+        <section>
+            <span><a href="javascript:void(0);" onclick="window.history.back();">Back</a></span>&nbsp;|&nbsp;<span><a href="../">Home</a></span>
+        </section>
+    </div>
+
+    <div class="post-nav"><a href="../why_kubeflow_in_your_infrastructure/" class="prev" rel="prev" title="Why Kubeflow In Your Infrastructure"><i class="fas fa-angle-left fa-fw"></i>Why Kubeflow In Your Infrastructure</a>
+            <a href="../hydra/" class="next" rel="next" title="Hydra—Kubernetes based Dataset PubSub and Volume Management System">Hydra—Kubernetes based Dataset PubSub and Volume Management System<i class="fas fa-angle-right fa-fw"></i></a></div>
+</div>
+</article></div>
+            </main></div>
+
+        <div id="fixed-buttons"><a href="#" id="back-to-top" class="fixed-button" title="Back to Top">
+                <i class="fas fa-arrow-up fa-fw"></i>
+            </a><a href="#" id="view-comments" class="fixed-button" title="View Comments">
+                <i class="fas fa-comment fa-fw"></i>
+            </a>
+        </div><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/css/lightgallery.min.css"><style>.lg-toolbar .lg-icon::after { color: #999; }</style><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/smooth-scroll@16.1.3/dist/smooth-scroll.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lazysizes@5.2.0/lazysizes.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lightgallery.js@1.1.3/dist/js/lightgallery.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-thumbnail.js@1.1.0/dist/lg-thumbnail.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/lg-zoom.js@1.0.1/dist/lg-zoom.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/clipboard@2.0.6/dist/clipboard.min.js"></script><script type="text/javascript" src="https://cdn.jsdelivr.net/npm/sharer.js@0.4.0/sharer.min.js"></script><script type="text/javascript">window.config={"code":{"copyTitle":"Copy to clipboard","maxShownLines":10},"comment":{},"lightGallery":{"actualSize":false,"exThumbImage":"data-thumbnail","hideBarsDelay":2000,"selector":".lightgallery","speed":400,"thumbContHeight":80,"thumbWidth":80,"thumbnail":true}};</script><script type="text/javascript" src="../js/theme.min.js"></script></body>
+</html>

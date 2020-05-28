@@ -1,0 +1,16 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>markdown - Tag - Software Tech Blog</title>
+        <link>https://faheem-nadeem.github.io/tags/markdown/</link>
+        <description>markdown - Tag - Software Tech Blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>en</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Fri, 29 Nov 2019 16:30:40 &#43;0900</lastBuildDate><atom:link href="https://faheem-nadeem.github.io/tags/markdown/" rel="self" type="application/rss+xml" /><item>
+    <title>Ultimate Guide to Markdown</title>
+    <link>https://faheem-nadeem.github.io/syntax/</link>
+    <pubDate>Fri, 29 Nov 2019 16:30:40 &#43;0900</pubDate>
+    <author>Author</author>
+    <guid>https://faheem-nadeem.github.io/syntax/</guid>
+    <description><![CDATA[<div class="featured-image">
+                <img src="/images/posts/markdown/markdown-4.jpg" referrerpolicy="no-referrer">
+            </div><p>This article offers a quick cheatsheet of basic Markdown syntax that can be used in Hugo content files.</p>]]></description>
+</item></channel>
+</rss>

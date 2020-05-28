@@ -1,0 +1,16 @@
+<rss xmlns:atom="http://www.w3.org/2005/Atom" version="2.0">
+    <channel>
+        <title>kubeflow - Tag - Software Tech Blog</title>
+        <link>https://faheem-nadeem.github.io/tags/kubeflow/</link>
+        <description>kubeflow - Tag - Software Tech Blog</description>
+        <generator>Hugo -- gohugo.io</generator><language>en</language><copyright>This work is licensed under a Creative Commons Attribution-NonCommercial 4.0 International License.</copyright><lastBuildDate>Fri, 09 Nov 2018 01:57:04 &#43;0200</lastBuildDate><atom:link href="https://faheem-nadeem.github.io/tags/kubeflow/" rel="self" type="application/rss+xml" /><item>
+    <title>Why Kubeflow In Your Infrastructure</title>
+    <link>https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/</link>
+    <pubDate>Fri, 09 Nov 2018 01:57:04 &#43;0200</pubDate>
+    <author>Author</author>
+    <guid>https://faheem-nadeem.github.io/why_kubeflow_in_your_infrastructure/</guid>
+    <description><![CDATA[<div class="featured-image">
+                <img src="/images/posts/kubeflow/architecture.png" referrerpolicy="no-referrer">
+            </div>CEOs and CTOs are being challenged by customers, analysts and investors to define how Artificial Intelligence and Machine Learning will impact their revenues and costs. The leading research and development organizations are quickly migrating to open source machine learning frameworks, especially those that take advantage of the operational and infrastructure efficiencies provided by containers, micro-services and Kubernetes. This trend is demonstrated in a recent 451 Research survey which found that over 70% of enterprise organizations surveyed are using Kubernetes.]]></description>
+</item></channel>
+</rss>
